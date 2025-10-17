@@ -2,6 +2,7 @@ pub mod affiliated_artists;
 pub mod announces;
 pub mod artists;
 pub mod auth;
+pub mod bookmarks;
 pub mod collages;
 pub mod conversations;
 pub mod edition_groups;

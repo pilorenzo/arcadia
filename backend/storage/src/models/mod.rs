@@ -1,4 +1,5 @@
 pub mod artist;
+pub mod bookmark;
 pub mod collage;
 pub mod conversation;
 pub mod edition_group;
