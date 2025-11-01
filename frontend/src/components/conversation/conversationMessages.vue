@@ -4,7 +4,6 @@
       v-for="message in messages"
       :key="message.id"
       :comment="message"
-      :reverseUserPosition="userStore.id === message.created_by.id"
       :class="`message ${userStore.id === message.created_by.id ? 'sent' : 'received'}`"
     />
   </div>
@@ -26,11 +25,5 @@ defineProps<{
 .messages {
   display: flex;
   flex-direction: column;
-}
-.message {
-  width: 95%;
-  &.sent {
-    align-self: flex-end;
-  }
 }
 </style>
