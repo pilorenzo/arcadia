@@ -1,7 +1,7 @@
 services:
   db:
     container_name: arcadia_db
-    image: postgres
+    image: postgres:18.0
     restart: always
     # set shared memory limit when using docker-compose
     shm_size: 128mb
@@ -12,7 +12,7 @@ services:
     #    tmpfs:
     #      size: 134217728 # 128*2^20 bytes = 128Mb
     volumes:
-      - db_data:/var/lib/postgresql/data/
+      - db_data:/var/lib/postgresql/
     ports:
       - 4321:5432
     env_file:
