@@ -315,7 +315,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["Get forum thread"];
+        get: operations["Get forum thread's posts"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1414,6 +1414,16 @@ export interface components {
             /** Format: int64 */
             id: number;
             name: string;
+        };
+        GetForumThreadPostsQuery: {
+            /** Format: int32 */
+            page?: number | null;
+            /** Format: int32 */
+            page_size: number;
+            /** Format: int64 */
+            post_id?: number | null;
+            /** Format: int64 */
+            thread_id: number;
         };
         GetUserApplicationsQuery: {
             /** Format: int64 */
@@ -3163,12 +3173,13 @@ export interface operations {
             };
         };
     };
-    "Get forum thread": {
+    "Get forum thread's posts": {
         parameters: {
             query: {
                 thread_id: number;
-                page: number;
+                page?: number | null;
                 page_size: number;
+                post_id?: number | null;
             };
             header?: never;
             path?: never;

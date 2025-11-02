@@ -107,7 +107,8 @@
     "new_post": "New post",
     "new_thread": "New thread",
     "thread_name": "Thread name",
-    "discuss": "Discuss"
+    "discuss": "Discuss",
+    "go_to_last_page_to_reply": "Go to last page to reply"
   },
   "user": {
     "username": "Username",

@@ -4,7 +4,8 @@ use crate::{
         common::PaginatedResults,
         forum::{
             ForumPost, ForumPostAndThreadName, ForumPostHierarchy, ForumThread,
-            ForumThreadEnriched, UserCreatedForumPost, UserCreatedForumThread,
+            ForumThreadEnriched, GetForumThreadPostsQuery, UserCreatedForumPost,
+            UserCreatedForumThread,
         },
     },
 };
@@ -305,11 +306,30 @@ impl ConnectionPool {
 
     pub async fn find_forum_thread_posts(
         &self,
-        forum_thread_id: i64,
-        page: u32,
-        page_size: u32,
+        form: GetForumThreadPostsQuery,
     ) -> Result<PaginatedResults<ForumPostHierarchy>> {
-        let offset = (page - 1) * page_size;
+        let page_size = form.page_size as i64;
+        let mut current_page = form.page.unwrap_or(1);
+
+        let offset = if let Some(post_id) = form.post_id {
+            let position = sqlx::query_scalar!(
+                r#"
+                SELECT COUNT(*)::BIGINT FROM forum_posts
+                WHERE forum_thread_id = $1 AND id < $2
+                "#,
+                form.thread_id,
+                post_id
+            )
+            .fetch_one(self.borrow())
+            .await?
+            .unwrap_or(0);
+
+            // i64 ceil division is unstable as of now
+            current_page = ((position + 1) as u64).div_ceil(form.page_size as u64) as u32;
+            ((position / page_size) * page_size) as i64
+        } else {
+            ((form.page.unwrap_or(1) - 1) as i64) * page_size
+        };
 
         let forum_thread_data = sqlx::query!(
             r#"
@@ -354,9 +374,9 @@ impl ConnectionPool {
                 LIMIT $3
             ) p;
             "#,
-            forum_thread_id,
-            offset as i64,
-            page_size as i64
+            form.thread_id,
+            offset,
+            page_size
         )
         .fetch_one(self.borrow())
         .await
@@ -372,8 +392,8 @@ impl ConnectionPool {
 
         let paginated_results = PaginatedResults {
             results: posts,
-            page,
-            page_size,
+            page: current_page,
+            page_size: form.page_size,
             total_items: forum_thread_data.total_items.unwrap_or(0),
         };
 

@@ -1,7 +1,7 @@
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 
 use super::user::{UserLite, UserLiteAvatar};
 
@@ -159,4 +159,12 @@ pub struct ForumPostAndThreadName {
     pub content: String,
     pub sticky: bool,
     pub forum_thread_name: String,
+}
+
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
+pub struct GetForumThreadPostsQuery {
+    pub thread_id: i64,
+    pub page: Option<u32>,
+    pub page_size: u32,
+    pub post_id: Option<i64>,
 }

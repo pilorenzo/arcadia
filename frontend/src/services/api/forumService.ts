@@ -31,8 +31,16 @@ export const getForumThread = async (forumThreadId: number): Promise<ForumThread
 
 export type PaginatedResults_ForumPostHierarchy = components['schemas']['PaginatedResults_ForumPostHierarchy']
 
-export const getForumThreadPosts = async (forumThreadId: number, page: number, page_size: number): Promise<PaginatedResults_ForumPostHierarchy> => {
-  return (await api.get<PaginatedResults_ForumPostHierarchy>(`/forum/thread/posts?thread_id=${forumThreadId}&page=${page}&page_size=${page_size}`)).data
+export type GetForumThreadPostsQuery = components['schemas']['GetForumThreadPostsQuery']
+
+export const getForumThreadPosts = async (query: GetForumThreadPostsQuery): Promise<PaginatedResults_ForumPostHierarchy> => {
+  return (
+    await api.get<PaginatedResults_ForumPostHierarchy>(
+      `/forum/thread/posts?thread_id=${query.thread_id}&page_size=${query.page_size}` +
+        (query.page !== null ? `&page=${query.page}` : '') +
+        (query.post_id !== null ? `&post_id=${query.post_id}` : ''),
+    )
+  ).data
 }
 
 export type UserCreatedForumPost = components['schemas']['UserCreatedForumPost']

@@ -23,10 +23,16 @@
 <script setup lang="ts">
 import { computed, defineProps, ref } from 'vue'
 import PaginationSelector from './PaginationSelector.vue'
+import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const props = defineProps<{
   totalItems: number
   pageSize: number
+  initialPage?: number | null
+  totalPages: number
 }>()
 
 const currentPage = ref(1)
@@ -40,10 +46,8 @@ const emit = defineEmits<{
   changePage: [Pagination]
 }>()
 
-const totalPages = computed(() => Math.ceil(props.totalItems / props.pageSize))
-
 const pageRanges = computed(() => {
-  const total = totalPages.value
+  const total = props.totalPages
   const maxVisible = 15
   let startPage = Math.max(1, currentPage.value - Math.floor(maxVisible / 2))
   let endPage = startPage + maxVisible - 1
@@ -62,10 +66,24 @@ const pageRanges = computed(() => {
 })
 
 const goToPage = (page: number) => {
-  if (page < 1 || page > totalPages.value) return
+  if (page < 1 || page > props.totalPages) return
   currentPage.value = page
+  router.push({
+    // path: route.path,
+    query: { page: page },
+  })
   emit('changePage', { page, pageSize: props.pageSize })
 }
+
+defineExpose({
+  goToPage,
+})
+
+onMounted(() => {
+  if (props.initialPage) {
+    currentPage.value = props.initialPage
+  }
+})
 </script>
 <style scoped>
 .pagination {

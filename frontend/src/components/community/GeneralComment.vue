@@ -1,5 +1,15 @@
 <template>
-  <ContentContainer class="comment-container">
+  <ContentContainer class="comment-container" :id="`post-${comment.id}`">
+    <div style="float: right">
+      <RouterLink
+        :to="{
+          query: { post_id: comment.id },
+          hash: `#post-${comment.id}`,
+        }"
+      >
+        <i class="pi pi-link" />
+      </RouterLink>
+    </div>
     <div class="comment">
       <div class="user">
         <img class="avatar" :src="comment.created_by.avatar ?? '/default_user_avatar.jpg'" :alt="comment.created_by.username + '\'s avatar'" />

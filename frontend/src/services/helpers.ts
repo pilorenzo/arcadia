@@ -356,3 +356,13 @@ export const isAttributeUsed = (attribute: keyof Torrent | keyof TorrentRequest,
       return true
   }
 }
+export const scrollToHash = () => {
+  ;(function h() {
+    const e = document.querySelector(location.hash)
+    if (e) {
+      e.scrollIntoView({ behavior: 'smooth' })
+    } else {
+      setTimeout(h, 100)
+    }
+  })()
+}

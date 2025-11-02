@@ -1,5 +1,5 @@
-use arcadia_storage::models::collage::SearchCollagesQuery;
 use arcadia_storage::models::series::SearchSeriesQuery;
+use arcadia_storage::models::{collage::SearchCollagesQuery, forum::GetForumThreadPostsQuery};
 use utoipa::{
     openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
     Modify, OpenApi,
@@ -92,7 +92,8 @@ use crate::handlers::{
         GetUserApplicationsQuery,
         SearchTorrentRequestsQuery,
         SearchCollagesQuery,
-        SearchSeriesQuery
+        SearchSeriesQuery,
+        GetForumThreadPostsQuery
     ),)
 )]
 pub struct ApiDoc;
