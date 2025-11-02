@@ -558,7 +558,7 @@ CREATE TABLE torrent_reports (
 CREATE TABLE peers (
     peer_id bytea NOT NULL,
     ip INET NOT NULL,
-    port smallint NOT NULL,
+    port INT NOT NULL,
     agent varchar(64) NOT NULL,
     uploaded bigint NOT NULL,
     downloaded bigint NOT NULL,

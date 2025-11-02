@@ -53,7 +53,7 @@ pub async fn reap(arc: &Data<Tracker>) {
         let torrent_removed_peers = torrent
             .peers
             .extract_if(.., |_index, peer| {
-                inactive_cutoff <= peer.updated_at || peer.is_active
+                inactive_cutoff >= peer.updated_at || !peer.is_active
             })
             .map(|(index, _peer)| index)
             .collect::<Vec<arcadia_shared::tracker::models::peer::Index>>();
