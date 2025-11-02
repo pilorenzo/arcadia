@@ -25,6 +25,7 @@ use arcadia_shared::tracker::models::{
     user_update::{self, UserUpdate},
 };
 use chrono::{Duration, Utc};
+use log::debug;
 use rand::{rng, seq::IteratorRandom, Rng};
 
 #[derive(Debug)]
@@ -568,6 +569,10 @@ pub async fn exec(
             },
         );
     }
+    debug!(
+        "Announce response: {:?}",
+        String::from_utf8_lossy(&response)
+    );
 
     Ok(HttpResponse::Ok().body(response))
 }

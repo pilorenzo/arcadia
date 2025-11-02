@@ -1,5 +1,4 @@
 use chrono::{DateTime, Utc};
-use futures_util::TryStreamExt;
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use sqlx::{Database, Decode, PgPool};
@@ -75,41 +74,51 @@ impl Map {
         }
 
         // Load peers into each torrent
-        let mut peers = sqlx::query!(
+        let peers = sqlx::query!(
             r#"
-                        SELECT
-                            peers.ip as "ip_address: IpAddr",
-                            peers.user_id as "user_id",
-                            peers.torrent_id as "torrent_id",
-                            peers.port as "port",
-                            peers.seeder as "is_seeder: bool",
-                            peers.active as "is_active: bool",
-                            peers.updated_at as "updated_at: DateTime<Utc>",
-                            peers.uploaded as "uploaded",
-                            peers.downloaded as "downloaded",
-                            peers.peer_id as "peer_id: PeerId"
-                        FROM
-                            peers
-                    "#
+                SELECT
+                    peers.ip AS "ip_address: IpAddr",
+                    peers.user_id AS "user_id",
+                    peers.torrent_id AS "torrent_id",
+                    peers.port AS "port",
+                    peers.seeder AS "is_seeder: bool",
+                    peers.active AS "is_active: bool",
+                    peers.updated_at AS "updated_at: DateTime<Utc>",
+                    peers.uploaded AS "uploaded",
+                    peers.downloaded AS "downloaded",
+                    peers.peer_id AS "peer_id: PeerId"
+                FROM peers
+            "#
         )
-        .fetch(db);
+        .fetch_all(db)
+        .await
+        .expect("Failed loading peers from database");
 
-        while let Some(peer) = peers.try_next().await.expect("Failed loading peers.") {
-            map.entry(peer.torrent_id as u32).and_modify(|torrent| {
+        for peer in peers {
+            let torrent_id =
+                u32::try_from(peer.torrent_id).expect("torrent_id out of range for u32");
+            let user_id = u32::try_from(peer.user_id).expect("user_id out of range for u32");
+            #[allow(clippy::expect_fun_call)]
+            let port = u16::try_from(peer.port).expect(&format!(
+                "Invalid port number in database. Peer: {:?}",
+                peer
+            ));
+
+            map.entry(torrent_id).and_modify(|torrent| {
                 torrent.peers.insert(
                     peer::Index {
-                        user_id: peer.user_id as u32,
+                        user_id,
                         peer_id: peer.peer_id,
                     },
                     Peer {
                         ip_address: peer.ip_address,
-                        port: peer.port as u16,
+                        port,
                         is_seeder: peer.is_seeder,
                         is_active: peer.is_active,
                         has_sent_completed: false,
                         updated_at: peer
                             .updated_at
-                            .expect("Peer with a null updated_at found in database."),
+                            .expect("Peer with null updated_at found in database."),
                         uploaded: peer.uploaded as u64,
                         downloaded: peer.downloaded as u64,
                     },
