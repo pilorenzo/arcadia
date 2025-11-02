@@ -1,7 +1,6 @@
 use crate::OpenSignups;
 use envconfig::Envconfig;
 use reqwest::Url;
-use std::{collections::HashSet, str::FromStr};
 
 #[derive(Envconfig, Clone)]
 pub struct Env {
@@ -59,37 +58,9 @@ pub struct TrackerConfig {
     pub name: String,
     #[envconfig(from = "ARCADIA_TRACKER_URL")]
     pub url: Url,
-    #[envconfig(from = "ARCADIA_TRACKER_ANNOUNCE_INTERVAL")]
-    pub announce_interval: u32,
-    #[envconfig(from = "ARCADIA_TRACKER_ANNOUNCE_INTERVAL_GRACE_PERIOD")]
-    pub announce_interval_grace_period: u32,
-    #[envconfig(from = "ARCADIA_ALLOWED_TORRENT_CLIENTS")]
-    pub allowed_torrent_clients: AllowedTorrentClientSet,
-    #[envconfig(from = "TASK_INTERVAL_UPDATE_TORRENT_SEEDERS_LEECHERS")]
-    pub interval_update_torrent_seeders_leechers: String,
-    #[envconfig(from = "TASK_INTERVAL_REMOVE_INACTIVE_PEERS")]
-    pub interval_remove_inactive_peers: String,
 
     #[envconfig(from = "ARCADIA_TRACKER_API_KEY")]
     pub api_key: String,
-}
-
-#[derive(Clone)]
-pub struct AllowedTorrentClientSet {
-    pub clients: HashSet<Vec<u8>>,
-}
-
-impl FromStr for AllowedTorrentClientSet {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let clients = s
-            .split(',')
-            .map(|s| s.trim().as_bytes().to_vec())
-            .collect::<HashSet<Vec<u8>>>();
-
-        Ok(Self { clients })
-    }
 }
 
 #[derive(Envconfig, Clone)]

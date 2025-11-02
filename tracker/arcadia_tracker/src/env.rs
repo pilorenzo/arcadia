@@ -3,8 +3,6 @@ use std::{collections::HashSet, str::FromStr};
 
 #[derive(Debug, Envconfig, Clone)]
 pub struct Env {
-    #[envconfig(from = "ANNOUNCE_INTERVAL_GRACE_PERIOD")]
-    pub announce_interval_grace_period: u32,
     #[envconfig(from = "ALLOWED_TORRENT_CLIENTS")]
     pub allowed_torrent_clients: AllowedTorrentClientSet,
     #[envconfig(from = "NUMWANT_DEFAULT")]

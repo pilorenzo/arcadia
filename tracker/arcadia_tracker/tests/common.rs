@@ -19,7 +19,6 @@ pub async fn create_test_app(
 ) -> impl Service<Request, Response = ServiceResponse, Error = Error> {
     // Create a default env for testing
     let env = Env {
-        announce_interval_grace_period: 60,
         allowed_torrent_clients: AllowedTorrentClientSet {
             clients: vec![b"lt0F01-".to_vec(), b"qB".to_vec(), b"UTorrent".to_vec()]
                 .into_iter()
