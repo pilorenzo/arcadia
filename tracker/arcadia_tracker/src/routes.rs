@@ -1,14 +1,17 @@
-use actix_web::web::{self, scope};
+use actix_web::web::{self, put, resource, scope};
 
-use crate::announce::handlers::announce::config as AnnouncesConfig;
-// use actix_web_httpauth::middleware::HttpAuthentication;
-
-// use crate::middleware::authenticate_user;
+use crate::{
+    announce::handlers::{announce::config as AnnouncesConfig, torrents::upsert_torrent},
+    middleware::authenticate_backend,
+};
+use actix_web_httpauth::middleware::HttpAuthentication;
 
 pub fn init(cfg: &mut web::ServiceConfig) {
-    cfg.service(scope("{passkey}").configure(AnnouncesConfig));
     // TODO: protect by only allowing requests from backend's ip
-    // cfg.service(
-    //          .wrap(HttpAuthentication::with_fn(authenticate_user(req, passkey))),
-    // );
+    cfg.service(
+        web::scope("/api")
+            .wrap(HttpAuthentication::with_fn(authenticate_backend))
+            .service(resource("/torrents").route(put().to(upsert_torrent::exec))),
+    );
+    cfg.service(scope("{passkey}").configure(AnnouncesConfig));
 }
