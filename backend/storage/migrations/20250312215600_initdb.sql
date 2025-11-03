@@ -40,7 +40,7 @@ CREATE TABLE users (
     bonus_points BIGINT NOT NULL DEFAULT 0,
     freeleech_tokens INT NOT NULL DEFAULT 0,
     settings JSONB NOT NULL DEFAULT '{}',
-    passkey VARCHAR(33) NOT NULL,
+    passkey VARCHAR(32) NOT NULL,
     warned BOOLEAN NOT NULL DEFAULT FALSE,
     banned BOOLEAN NOT NULL DEFAULT FALSE,
     staff_note TEXT NOT NULL DEFAULT '',
@@ -429,16 +429,18 @@ CREATE TYPE features_enum AS ENUM('HDR', 'HDR 10', 'HDR 10+', 'DV', 'Commentary'
 CREATE TYPE extras_enum AS ENUM('booklet', 'manual', 'behind_the_scenes', 'deleted_scenes', 'featurette', 'trailer', 'other');
 CREATE TABLE torrents (
     id SERIAL PRIMARY KEY,
-    upload_factor FLOAT NOT NULL DEFAULT 1.0,
-    download_factor FLOAT NOT NULL DEFAULT 1.0,
+    upload_factor SMALLINT NOT NULL DEFAULT 100,
+    download_factor SMALLINT NOT NULL DEFAULT 100,
     seeders BIGINT NOT NULL DEFAULT 0,
     leechers BIGINT NOT NULL DEFAULT 0,
-    completed BIGINT NOT NULL DEFAULT 0,
+    times_completed INT NOT NULL DEFAULT 0,
     snatched BIGINT NOT NULL DEFAULT 0,
     edition_group_id INT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     created_by_id INT NOT NULL,
+    deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+    deleted_by_id INT DEFAULT NULL,
     info_hash BYTEA NOT NULL CHECK(octet_length(info_hash) = 20),
     info_dict BYTEA NOT NULL,
     languages language_enum[] NOT NULL,
@@ -480,14 +482,6 @@ CREATE TABLE torrents (
     FOREIGN KEY (edition_group_id) REFERENCES edition_groups(id) ON DELETE CASCADE,
     FOREIGN KEY (created_by_id) REFERENCES users(id) ON DELETE SET NULL,
     UNIQUE (info_hash)
-);
-CREATE TABLE deleted_torrents (
-    LIKE torrents INCLUDING CONSTRAINTS, -- INCLUDING DEFAULTS INCLUDING INDEXES,
-    deleted_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    deleted_by_id INT NOT NULL,
-    reason TEXT NOT NULL,
-
-    FOREIGN KEY (deleted_by_id) REFERENCES users(id)
 );
 CREATE TABLE title_group_comments (
     id BIGSERIAL PRIMARY KEY,
@@ -544,6 +538,14 @@ CREATE TABLE torrent_request_votes(
     FOREIGN KEY (torrent_request_id) REFERENCES torrent_requests(id) ON DELETE CASCADE,
     FOREIGN KEY (created_by_id) REFERENCES users(id) ON DELETE CASCADE
 );
+CREATE TABLE torrent_request_comments (
+    id BIGSERIAL PRIMARY KEY,
+    torrent_request_id BIGINT NOT NULL REFERENCES torrent_requests(id) ON DELETE CASCADE,
+    created_by_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
 CREATE TABLE torrent_reports (
     id BIGSERIAL PRIMARY KEY,
     reported_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -553,29 +555,31 @@ CREATE TABLE torrent_reports (
     FOREIGN KEY (reported_by_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (reported_torrent_id) REFERENCES torrents(id) ON DELETE CASCADE
 );
-
-CREATE TYPE peer_status_enum AS ENUM('seeding', 'leeching');
 CREATE TABLE peers (
-    id BIGINT GENERATED ALWAYS AS IDENTITY,
-    user_id INT NOT NULL,
-    torrent_id INT NOT NULL,
-    peer_id BYTEA NOT NULL CHECK(octet_length(peer_id) = 20),
+    peer_id bytea NOT NULL,
     ip INET NOT NULL,
-    port INTEGER NOT NULL,
-    first_seen_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP ,
-    last_seen_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    real_uploaded BIGINT NOT NULL DEFAULT 0,
-    real_downloaded BIGINT NOT NULL DEFAULT 0,
-    user_agent TEXT,
-    status peer_status_enum NOT NULL,
-
-    PRIMARY KEY (id),
-
-    FOREIGN KEY (torrent_id) REFERENCES torrents(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-
-    UNIQUE (torrent_id, peer_id, ip, port)
+    port INT NOT NULL,
+    agent varchar(64) NOT NULL,
+    uploaded bigint NOT NULL,
+    downloaded bigint NOT NULL,
+    "left" bigint NOT NULL,
+    seeder boolean NOT NULL,
+    created_at timestamp without time zone DEFAULT NULL,
+    updated_at timestamp without time zone DEFAULT NULL,
+    torrent_id integer NOT NULL,
+    user_id integer NOT NULL,
+    -- connectable boolean NOT NULL DEFAULT FALSE,
+    active boolean NOT NULL,
+    -- visible boolean NOT NULL,
+    PRIMARY KEY (user_id, torrent_id, peer_id)
 );
+CREATE INDEX peers_idx_seeder_user_id ON peers (seeder, user_id);
+CREATE INDEX peers_torrent_id_foreign ON peers (torrent_id);
+CREATE INDEX peers_active_index ON peers (active);
+ALTER TABLE peers
+ADD CONSTRAINT peers_torrent_id_foreign FOREIGN KEY (torrent_id) REFERENCES torrents (id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE peers
+ADD CONSTRAINT peers_user_id_foreign FOREIGN KEY (user_id) REFERENCES users (id) ON UPDATE CASCADE;
 CREATE TABLE torrent_activities (
     id BIGSERIAL PRIMARY KEY,
     torrent_id INT NOT NULL,
@@ -584,6 +588,10 @@ CREATE TABLE torrent_activities (
     first_seen_seeding_at TIMESTAMP WITH TIME ZONE,
     last_seen_seeding_at TIMESTAMP WITH TIME ZONE,
     total_seed_time BIGINT NOT NULL DEFAULT 0,
+    uploaded BIGINT NOT NULL DEFAULT 0,
+    real_uploaded BIGINT NOT NULL DEFAULT 0,
+    downloaded BIGINT NOT NULL DEFAULT 0,
+    real_downloaded BIGINT NOT NULL DEFAULT 0,
 
     FOREIGN KEY (torrent_id) REFERENCES torrents(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id),
@@ -870,7 +878,7 @@ SELECT
     t.download_factor,
     t.seeders,
     t.leechers,
-    t.completed,
+    t.times_completed,
     t.edition_group_id,
     t.created_at,
     t.updated_at,
@@ -922,6 +930,7 @@ LEFT JOIN
     torrent_reports tr ON t.id = tr.reported_torrent_id
 LEFT JOIN
     peers p ON t.id = p.torrent_id
+WHERE t.deleted_at IS NULL
 GROUP BY
     t.id, u.id, u.username
 ORDER BY
@@ -985,7 +994,7 @@ ORDER BY
                     'torrents', COALESCE(jsonb_agg(
                         jsonb_strip_nulls(jsonb_build_object(
                             'id', ft.id, 'upload_factor', ft.upload_factor, 'download_factor', ft.download_factor,
-                            'seeders', ft.seeders, 'leechers', ft.leechers, 'completed', ft.completed,
+                            'seeders', ft.seeders, 'leechers', ft.leechers, 'times_completed', ft.times_completed,
                             'edition_group_id', ft.edition_group_id, 'created_at', ft.created_at, 'extras', ft.extras,
                             'release_name', ft.release_name, 'release_group', ft.release_group,
                             'file_amount_per_type', ft.file_amount_per_type, 'trumpable', ft.trumpable,

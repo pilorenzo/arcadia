@@ -76,7 +76,10 @@ Collections represent a "grouping" of content, to avoid having multiple uploads 
 
 ## Acknlowedgements
 
-- Thanks to [GazellePW](https://github.com/Mosasauroidea/GazellePW/) for their mediainfo and bdinfo parsers written in js
+Thanks to:
+
+- [UNIT3D-Announce](https://github.com/Roardom/UNIT3D-Announce) for their amazing tracker and help explaining its details
+- [GazellePW](https://github.com/Mosasauroidea/GazellePW/) for their mediainfo and bdinfo parsers written in js
 - [BBcode renderer plugin](https://github.com/JiLiZART/BBob/issues/125#issuecomment-1774257527) for line breaks
 
 ## Notes

@@ -1,4 +1,5 @@
 pub mod create_torrent_request;
+pub mod create_torrent_request_comment;
 pub mod create_torrent_request_vote;
 pub mod edit_torrent_request;
 pub mod fill_torrent_request;
@@ -16,4 +17,7 @@ pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {
     );
     cfg.service(resource("/fill").route(post().to(self::fill_torrent_request::exec::<R>)));
     cfg.service(resource("/vote").route(post().to(self::create_torrent_request_vote::exec::<R>)));
+    cfg.service(
+        resource("/comment").route(post().to(self::create_torrent_request_comment::exec::<R>)),
+    );
 }

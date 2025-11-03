@@ -1,6 +1,16 @@
 <template>
-  <ContentContainer class="comment-container">
-    <div :class="{ comment: true, 'reverse-user-position': reverseUserPosition }">
+  <ContentContainer class="comment-container" :id="`post-${comment.id}`">
+    <div style="float: right">
+      <RouterLink
+        :to="{
+          query: { post_id: comment.id },
+          hash: `#post-${comment.id}`,
+        }"
+      >
+        <i class="pi pi-link" />
+      </RouterLink>
+    </div>
+    <div class="comment">
       <div class="user">
         <img class="avatar" :src="comment.created_by.avatar ?? '/default_user_avatar.jpg'" :alt="comment.created_by.username + '\'s avatar'" />
         <RouterLink :to="`/user/${comment.created_by.id}`">
@@ -35,7 +45,6 @@ const { t } = useI18n()
 
 defineProps<{
   comment: TitleGroupCommentHierarchy | ForumPostHierarchy | ConversationMessageHierarchy
-  reverseUserPosition?: boolean
 }>()
 </script>
 
@@ -46,9 +55,6 @@ defineProps<{
 .comment {
   display: flex;
   align-items: flex-start;
-  &.reverse-user-position {
-    flex-direction: row-reverse;
-  }
 }
 .user {
   display: flex;
@@ -61,12 +67,6 @@ defineProps<{
 .avatar {
   width: 7em;
   border-radius: 7px;
-}
-.reverse-user-position {
-  .comment-body {
-    text-align: left;
-    width: 100%;
-  }
 }
 .comment-body {
   padding: 7px;

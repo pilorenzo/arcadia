@@ -1,6 +1,7 @@
 pub mod artist;
 pub mod bookmark;
 pub mod collage;
+pub mod common;
 pub mod conversation;
 pub mod edition_group;
 pub mod entity;
@@ -20,6 +21,7 @@ pub mod torrent;
 pub mod torrent_activity;
 pub mod torrent_report;
 pub mod torrent_request;
+pub mod torrent_request_comment;
 pub mod torrent_request_vote;
 pub mod user;
 pub mod user_application;

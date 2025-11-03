@@ -1,52 +1,137 @@
-use bincode::config;
-use reqwest::Client;
-use std::{
-    collections::HashMap,
-    ops::{Deref, DerefMut},
-};
+use chrono::{DateTime, Utc};
+use indexmap::IndexMap;
+use serde::{Deserialize, Serialize};
+use sqlx::{Database, Decode, PgPool};
+use std::net::IpAddr;
+use std::ops::{Deref, DerefMut};
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, bincode::Encode, bincode::Decode)]
+use crate::tracker::models::peer::{self, Peer};
+use crate::tracker::models::peer_id::PeerId;
+
+#[derive(Clone, Copy, Serialize, Deserialize, Debug, Eq, Hash, PartialEq)]
 pub struct InfoHash(pub [u8; 20]);
 
-#[derive(Debug, Clone, bincode::Encode, bincode::Decode, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Torrent {
-    pub upload_factor: f64,
-    pub download_factor: f64,
-    pub seeders: i64,
-    pub leechers: i64,
-    pub completed: i64,
+    pub upload_factor: i16,
+    pub download_factor: i16,
+    pub seeders: u32,
+    pub leechers: u32,
+    pub times_completed: u32,
+    pub is_deleted: bool,
+    pub peers: peer::Map,
 }
 
-#[derive(Debug, bincode::Encode, bincode::Decode)]
-pub struct Map(HashMap<u32, Torrent>);
+#[derive(Debug)]
+pub struct Map(pub IndexMap<u32, Torrent>);
+
+#[derive(Debug)]
+pub struct DBImportTorrent {
+    pub id: i32,
+    pub upload_factor: i16,
+    pub download_factor: i16,
+    pub seeders: i64,
+    pub leechers: i64,
+    pub times_completed: i32,
+    pub is_deleted: bool,
+}
 
 impl Map {
-    pub async fn from_backend() -> Self {
-        let base_url =
-            std::env::var("ARCADIA_API_BASE_URL").expect("env var ARCADIA_API_BASE_URL not set");
-        let url = format!("{}/api/tracker/torrents", base_url);
+    pub async fn from_database(db: &PgPool) -> Self {
+        let rows = sqlx::query_as!(
+            DBImportTorrent,
+            r#"
+                    SELECT
+                        id,
+                        upload_factor,
+                        download_factor,
+                        seeders,
+                        leechers,
+                        times_completed,
+                        CASE
+                            WHEN deleted_at IS NOT NULL THEN TRUE
+                            ELSE FALSE
+                        END AS "is_deleted!"
+                    FROM torrents
+                    "#
+        )
+        .fetch_all(db)
+        .await
+        .expect("could not get torrents");
 
-        let client = Client::new();
-        let api_key = std::env::var("API_KEY").expect("env var API_KEY not set");
-        let resp = client
-            .get(url)
-            .header("api_key", api_key)
-            .send()
-            .await
-            .expect("failed to fetch torrents");
-        let bytes = resp
-            .bytes()
-            .await
-            .expect("failed to read torrents response body");
+        let mut map: Map = Map(IndexMap::with_capacity(rows.len()));
+        for r in rows {
+            let torrent = Torrent {
+                upload_factor: r.upload_factor,
+                download_factor: r.download_factor,
+                seeders: r.seeders as u32,
+                leechers: r.leechers as u32,
+                times_completed: r.times_completed as u32,
+                is_deleted: r.is_deleted,
+                peers: peer::Map::new(),
+            };
+            map.insert(r.id as u32, torrent);
+        }
 
-        let config = config::standard();
-        let (map, _): (Map, usize) = bincode::decode_from_slice(&bytes[..], config).unwrap();
+        // Load peers into each torrent
+        let peers = sqlx::query!(
+            r#"
+                SELECT
+                    peers.ip AS "ip_address: IpAddr",
+                    peers.user_id AS "user_id",
+                    peers.torrent_id AS "torrent_id",
+                    peers.port AS "port",
+                    peers.seeder AS "is_seeder: bool",
+                    peers.active AS "is_active: bool",
+                    peers.updated_at AS "updated_at: DateTime<Utc>",
+                    peers.uploaded AS "uploaded",
+                    peers.downloaded AS "downloaded",
+                    peers.peer_id AS "peer_id: PeerId"
+                FROM peers
+            "#
+        )
+        .fetch_all(db)
+        .await
+        .expect("Failed loading peers from database");
+
+        for peer in peers {
+            let torrent_id =
+                u32::try_from(peer.torrent_id).expect("torrent_id out of range for u32");
+            let user_id = u32::try_from(peer.user_id).expect("user_id out of range for u32");
+            #[allow(clippy::expect_fun_call)]
+            let port = u16::try_from(peer.port).expect(&format!(
+                "Invalid port number in database. Peer: {:?}",
+                peer
+            ));
+
+            map.entry(torrent_id).and_modify(|torrent| {
+                torrent.peers.insert(
+                    peer::Index {
+                        user_id,
+                        peer_id: peer.peer_id,
+                    },
+                    Peer {
+                        ip_address: peer.ip_address,
+                        port,
+                        is_seeder: peer.is_seeder,
+                        is_active: peer.is_active,
+                        has_sent_completed: false,
+                        updated_at: peer
+                            .updated_at
+                            .expect("Peer with null updated_at found in database."),
+                        uploaded: peer.uploaded as u64,
+                        downloaded: peer.downloaded as u64,
+                    },
+                );
+            });
+        }
+
         map
     }
 }
 
 impl Deref for Map {
-    type Target = HashMap<u32, Torrent>;
+    type Target = IndexMap<u32, Torrent>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -56,5 +141,27 @@ impl Deref for Map {
 impl DerefMut for Map {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
+    }
+}
+
+impl<'r, DB: Database> Decode<'r, DB> for InfoHash
+where
+    &'r [u8]: Decode<'r, DB>,
+{
+    /// Decodes the database's string representation of the 40 character long
+    /// infohash in hex into a byte slice
+    fn decode(
+        value: <DB as Database>::ValueRef<'r>,
+    ) -> Result<InfoHash, Box<dyn std::error::Error + 'static + Send + Sync>> {
+        let value = <&[u8] as Decode<DB>>::decode(value)?;
+
+        if value.len() != 20 {
+            let error: Box<dyn std::error::Error + Send + Sync> =
+                Box::new(crate::error::DecodeError::InfoHash);
+
+            return Err(error);
+        }
+
+        Ok(InfoHash(<[u8; 20]>::try_from(&value[0..20])?))
     }
 }

@@ -307,11 +307,11 @@ impl FromStr for Features {
 #[derive(Debug, Serialize, FromRow, ToSchema)]
 pub struct Torrent {
     pub id: i32,
-    pub upload_factor: f64,
-    pub download_factor: f64,
+    pub upload_factor: i16,
+    pub download_factor: i16,
     pub seeders: i64,
     pub leechers: i64,
-    pub completed: i64,
+    pub times_completed: i32,
     pub snatched: i64,
     pub edition_group_id: i32,
     #[schema(value_type = String, format = DateTime)]
@@ -319,6 +319,9 @@ pub struct Torrent {
     #[schema(value_type = String, format = DateTime)]
     pub updated_at: DateTime<Local>,
     pub created_by_id: i32,
+    #[schema(value_type = String, format = DateTime)]
+    pub deleted_at: Option<DateTime<Local>>,
+    pub deleted_by_id: Option<i64>,
     pub extras: Vec<Extras>,
     pub release_name: Option<String>,
     pub release_group: Option<String>,
@@ -474,11 +477,11 @@ pub struct TorrentSearch {
 #[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct TorrentHierarchyLite {
     pub id: i32,
-    pub upload_factor: f64,
-    pub download_factor: f64,
+    pub upload_factor: i16,
+    pub download_factor: i16,
     pub seeders: i64,
     pub leechers: i64,
-    pub completed: i64,
+    pub times_completed: i32,
     pub snatched: i64,
     pub edition_group_id: i32,
     #[schema(value_type = String, format = DateTime)]
@@ -521,11 +524,11 @@ pub struct TorrentHierarchyLite {
 #[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct TorrentHierarchy {
     pub id: i32,
-    pub upload_factor: f64,
-    pub download_factor: f64,
+    pub upload_factor: i16,
+    pub download_factor: i16,
     pub seeders: i64,
     pub leechers: i64,
-    pub completed: i64,
+    pub times_completed: i32,
     pub snatched: i64,
     pub edition_group_id: i32,
     #[schema(value_type = String, format = DateTime)]

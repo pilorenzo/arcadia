@@ -85,8 +85,6 @@ async fn fetch_comic_vine_data<T: for<'de> Deserialize<'de>>(
     let api_key = env::var("COMIC_VINCE_API_KEY").ok().unwrap();
 
     let url = format!("{COMICVINE_API_BASE_URL}/{endpoint}/?api_key={api_key}&format=json");
-    let response = client.get(&url).send().await;
-    println!("{response:?}");
 
     let response = client
         .get(&url)

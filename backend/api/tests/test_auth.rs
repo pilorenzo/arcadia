@@ -44,8 +44,8 @@ async fn test_open_registration(pool: PgPool) {
         pool,
         MockRedisPool::default(),
         OpenSignups::Enabled,
-        1.0,
-        1.0,
+        100,
+        100,
     )
     .await;
 
@@ -88,8 +88,8 @@ async fn test_duplicate_username_registration(pool: PgPool) {
         pool,
         MockRedisPool::default(),
         OpenSignups::Enabled,
-        1.0,
-        1.0,
+        100,
+        100,
     )
     .await;
 
@@ -141,8 +141,8 @@ async fn test_closed_registration_failures(pool: PgPool) {
         pool,
         MockRedisPool::default(),
         OpenSignups::Disabled,
-        1.0,
-        1.0,
+        100,
+        100,
     )
     .await;
 
@@ -199,8 +199,8 @@ async fn test_closed_registration_success(pool: PgPool) {
         pool,
         MockRedisPool::default(),
         OpenSignups::Disabled,
-        1.0,
-        1.0,
+        100,
+        100,
     )
     .await;
 
@@ -263,8 +263,8 @@ async fn test_closed_registration_expired_failure(pool: PgPool) {
         pool,
         MockRedisPool::default(),
         OpenSignups::Disabled,
-        1.0,
-        1.0,
+        100,
+        100,
     )
     .await;
 
@@ -292,7 +292,7 @@ async fn test_closed_registration_expired_failure(pool: PgPool) {
 #[sqlx::test(fixtures("with_test_user"), migrations = "../storage/migrations")]
 async fn test_authorized_endpoint_after_login(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
-    let (service, user) = create_test_app_and_login(pool, MockRedisPool::default(), 1.0, 1.0).await;
+    let (service, user) = create_test_app_and_login(pool, MockRedisPool::default(), 100, 100).await;
 
     let req = TestRequest::get()
         .insert_header(("X-Forwarded-For", "10.10.4.88"))
@@ -323,8 +323,8 @@ async fn test_login_with_banned_user(pool: PgPool) {
         Arc::new(ConnectionPool::with_pg_pool(pool)),
         MockRedisPool::default(),
         OpenSignups::Disabled,
-        1.0,
-        1.0,
+        100,
+        100,
     )
     .await;
 
@@ -347,7 +347,7 @@ async fn test_login_with_banned_user(pool: PgPool) {
 async fn test_refresh_with_invalidated_token(pool: PgPool) {
     let pool = Arc::new(ConnectionPool::with_pg_pool(pool));
     let (service, user) =
-        create_test_app_and_login(Arc::clone(&pool), MockRedisPool::default(), 1.0, 1.0).await;
+        create_test_app_and_login(Arc::clone(&pool), MockRedisPool::default(), 100, 100).await;
 
     // invalidate user tokens
     let req = TestRequest::get()
@@ -371,8 +371,8 @@ async fn test_refresh_with_invalidated_token(pool: PgPool) {
     let (service, _) = create_test_app_and_login(
         Arc::clone(&pool),
         MockRedisPool::with_conn(redis_conn),
-        1.0,
-        1.0,
+        100,
+        100,
     )
     .await;
 

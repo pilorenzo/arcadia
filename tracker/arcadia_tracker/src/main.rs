@@ -1,5 +1,5 @@
 use actix_web::{middleware, web::Data, App, HttpServer};
-use arcadia_tracker::{api_doc::ApiDoc, env::Env, routes::init, Tracker};
+use arcadia_tracker::{api_doc::ApiDoc, env::Env, routes::init, scheduler, Tracker};
 use envconfig::Envconfig;
 use std::env;
 use utoipa::OpenApi;
@@ -16,10 +16,22 @@ async fn main() -> std::io::Result<()> {
     let env = Env::init_from_env().unwrap();
 
     let web_server_port = env::var("WEB_SERVER_PORT").expect("env var WEB_SERVER_PORT must be set");
-    let server_url = format!("127.0.0.1:{web_server_port}").to_string();
+    let web_server_host = env::var("WEB_SERVER_HOST").expect("env var WEB_SERVER_HOST must be set");
+    let server_url = format!("{}:{}", web_server_host, web_server_port);
     println!("Server running at http://{server_url}");
 
     let arc = Data::new(Tracker::new(env).await);
+
+    // Starts scheduler to automate flushing updates
+    // to database and inactive peer removal.
+    let _handle = tokio::spawn({
+        let arc = arc.clone();
+
+        async move {
+            scheduler::handle(&arc).await;
+        }
+    });
+
     let server = HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
@@ -34,4 +46,5 @@ async fn main() -> std::io::Result<()> {
     .run();
 
     server.await
+    //TODO: add graceful shutdown
 }

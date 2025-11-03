@@ -12,6 +12,4 @@ pub struct Env {
 pub struct TrackerConfig {
     #[envconfig(from = "ARCADIA_TRACKER_ANNOUNCE_INTERVAL")]
     pub announce_interval: u32,
-    #[envconfig(from = "ARCADIA_TRACKER_ANNOUNCE_INTERVAL_GRACE_PERIOD")]
-    pub announce_interval_grace_period: u32,
 }

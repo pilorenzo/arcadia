@@ -3,7 +3,7 @@ use actix_web_httpauth::middleware::HttpAuthentication;
 use arcadia_storage::redis::RedisPoolInterface;
 
 use crate::handlers::affiliated_artists::config as AffiliatedArtistsConfig;
-use crate::handlers::announces::config as AnnouncesConfig;
+// use crate::handlers::announces::config as AnnouncesConfig;
 use crate::handlers::artists::config as ArtistsConfig;
 use crate::handlers::auth::config as AuthConfig;
 use crate::handlers::collages::config as CollagesConfig;
@@ -29,7 +29,7 @@ use crate::handlers::wiki::config as WikiConfig;
 use crate::middlewares::auth_middleware::authenticate_user;
 
 pub fn init<R: RedisPoolInterface + 'static>(cfg: &mut web::ServiceConfig) {
-    cfg.service(scope("/announce").configure(AnnouncesConfig::<R>));
+    // cfg.service(scope("/announce").configure(AnnouncesConfig::<R>));
 
     cfg.service(
         web::scope("/api")

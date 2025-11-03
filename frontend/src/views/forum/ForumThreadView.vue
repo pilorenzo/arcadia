@@ -1,9 +1,20 @@
 <template>
   <div v-if="forumThread">
     <div class="title">
+      <RouterLink to="/forum">{{ forumThread.forum_category_name }}</RouterLink> >
+      <RouterLink :to="`/forum/sub-category/${forumThread.forum_sub_category_id}`">{{ forumThread.forum_sub_category_name }}</RouterLink> >
       {{ forumThread.name }}
     </div>
-    <GeneralComment v-for="post in forumThread.posts" :key="post.id" :comment="post" />
+    <PaginatedResults
+      v-if="forumThreadPosts.length > 0"
+      :totalPages
+      :initialPage
+      :totalItems="totalPosts"
+      @change-page="fetchForumThreadPosts($event.page, $event.pageSize, null)"
+      :page-size="pageSize"
+    >
+      <GeneralComment v-for="post in forumThreadPosts" :key="post.id" :comment="post" />
+    </PaginatedResults>
     <Form v-slot="$form" :initialValues="newPost" :resolver @submit="onFormSubmit" validateOnSubmit :validateOnValueUpdate="false">
       <div class="new-post">
         <BBCodeEditor
@@ -13,7 +24,15 @@
           :label="t('forum.new_post')"
         >
           <template #buttons>
-            <Button type="submit" label="Post" icon="pi pi-send" :loading="sendingPost" class="post-button" />
+            <Button
+              type="submit"
+              label="Post"
+              icon="pi pi-send"
+              :loading="sendingPost"
+              class="post-button"
+              :disabled="currentPage !== totalPages"
+              v-tooltip.top="currentPage !== totalPages ? t('forum.go_to_last_page_to_reply') : ''"
+            />
           </template>
         </BBCodeEditor>
         <Message v-if="$form.content?.invalid" severity="error" size="small" variant="simple">
@@ -25,7 +44,14 @@
 </template>
 
 <script setup lang="ts">
-import { getForumThread, postForumPost, type UserCreatedForumPost, type ForumPostHierarchy, type ForumThreadAndPosts } from '@/services/api/forumService'
+import {
+  getForumThread,
+  postForumPost,
+  type UserCreatedForumPost,
+  type ForumPostHierarchy,
+  type ForumThreadEnriched,
+  getForumThreadPosts,
+} from '@/services/api/forumService'
 import { onMounted } from 'vue'
 import { ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -36,11 +62,21 @@ import { useUserStore } from '@/stores/user'
 import { Form } from '@primevue/forms'
 import { Button } from 'primevue'
 import BBCodeEditor from '@/components/community/BBCodeEditor.vue'
+import PaginatedResults from '@/components/PaginatedResults.vue'
+import { nextTick } from 'vue'
+import { scrollToHash } from '@/services/helpers'
+import { computed } from 'vue'
 
 const route = useRoute()
 const { t } = useI18n()
 
-const forumThread = ref<null | ForumThreadAndPosts>(null)
+const forumThread = ref<null | ForumThreadEnriched>(null)
+const forumThreadPosts = ref<ForumPostHierarchy[]>([])
+const totalPosts = ref(0)
+const pageSize = ref(10)
+const totalPages = computed(() => Math.ceil(totalPosts.value / pageSize.value))
+const currentPage = ref(1)
+let initialPage: number | null = null
 const newPost = ref<UserCreatedForumPost>({
   content: '',
   forum_thread_id: 0,
@@ -49,8 +85,35 @@ const sendingPost = ref(false)
 const bbcodeEditorEmptyInput = ref(false)
 const siteName = import.meta.env.VITE_SITE_NAME
 
+const fetchForumThreadPosts = async (page: number | null, page_size: number, post_id: number | null) => {
+  const paginatedPosts = await getForumThreadPosts({
+    thread_id: parseInt(route.params.id as string),
+    page,
+    page_size,
+    post_id,
+  })
+  forumThreadPosts.value = paginatedPosts.results
+  totalPosts.value = paginatedPosts.total_items
+  await nextTick()
+  if (post_id !== null) {
+    initialPage = paginatedPosts.page
+    scrollToHash()
+  }
+  currentPage.value = paginatedPosts.page
+}
+
 onMounted(async () => {
-  forumThread.value = await getForumThread(parseInt(route.params.id as string))
+  let page: number | null = 1
+  if (route.query.page) {
+    page = parseInt(route.query.page as string)
+    initialPage = page
+  } else if (route.query.post_id) {
+    page = null
+  }
+  ;[forumThread.value] = await Promise.all([
+    getForumThread(+route.params.id!),
+    fetchForumThreadPosts(page, pageSize.value, route.query.post_id ? parseInt(route.query.post_id as string) : null),
+  ])
 
   document.title = forumThread.value ? `${forumThread.value.name} - ${siteName}` : `Forum thread - ${siteName}`
 })
@@ -88,7 +151,7 @@ const sendPost = async () => {
     created_by: useUserStore(),
   }
   newPost.value.content = ''
-  forumThread.value.posts.push(createdPost)
+  forumThreadPosts.value.push(createdPost)
   bbcodeEditorEmptyInput.value = true
   sendingPost.value = false
 }

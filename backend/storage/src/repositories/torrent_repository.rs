@@ -207,8 +207,10 @@ impl ConnectionPool {
             r#"
             SELECT
                 id, upload_factor, download_factor, seeders, leechers,
-                completed, snatched, edition_group_id, created_at, updated_at,
+                times_completed, snatched, edition_group_id, created_at, updated_at,
                 created_by_id,
+                deleted_at AS "deleted_at!: _",
+                deleted_by_id AS "deleted_by_id!: _",
                 extras AS "extras!: _",
                 languages AS "languages!: _",
                 release_name, release_group, description, file_amount_per_type,
@@ -225,7 +227,7 @@ impl ConnectionPool {
                 video_resolution_other_x,
                 video_resolution_other_y
             FROM torrents
-            WHERE id = $1
+            WHERE id = $1 AND deleted_at is NULL
             "#,
             torrent_id
         )
@@ -266,11 +268,13 @@ impl ConnectionPool {
                 languages = $19,
                 extras = $20,
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND deleted_at IS NULL
             RETURNING
                 id, upload_factor, download_factor, seeders, leechers,
-                completed, snatched, edition_group_id, created_at, updated_at,
+                times_completed, snatched, edition_group_id, created_at, updated_at,
                 created_by_id,
+                deleted_at AS "deleted_at!: _",
+                deleted_by_id AS "deleted_by_id!: _",
                 extras AS "extras!: _",
                 languages AS "languages!: _",
                 release_name, release_group, description, file_amount_per_type,
@@ -331,7 +335,7 @@ impl ConnectionPool {
             r#"
             UPDATE torrents
             SET snatched = snatched + 1
-            WHERE id = $1
+            WHERE id = $1 AND deleted_at IS NULL
             RETURNING
                 info_dict,
                 EXTRACT(EPOCH FROM created_at)::BIGINT AS "created_at_secs!",
@@ -439,7 +443,7 @@ impl ConnectionPool {
                 WHERE CASE
                     WHEN $1 = 'all time' THEN TRUE
                     ELSE t.created_at >= NOW() - CAST($1 AS INTERVAL)
-                END
+                END AND t.deleted_at is NULL
                 GROUP BY tg.id, tg.name
                 ORDER BY tg.id, COUNT(st.torrent_id) DESC
                 LIMIT $2
@@ -490,20 +494,9 @@ impl ConnectionPool {
 
         sqlx::query!(
             r#"
-            INSERT INTO deleted_torrents (SELECT *, NOW() AS deleted_at, $1 AS deleted_by_id, $2 AS reason FROM torrents WHERE id = $3);
+            UPDATE torrents SET deleted_at = NOW(), deleted_by_id = $1 WHERE id = $2;
             "#,
             current_user_id,
-            torrent_to_delete.reason,
-            torrent_to_delete.id
-        )
-        .execute(&mut *tx)
-        .await
-        .map_err(|error| Error::ErrorDeletingTorrent(error.to_string()))?;
-
-        sqlx::query!(
-            r#"
-            DELETE FROM torrents WHERE id = $1;
-            "#,
             torrent_to_delete.id
         )
         .execute(&mut *tx)
@@ -515,43 +508,44 @@ impl ConnectionPool {
         Ok(())
     }
 
-    pub async fn update_torrent_seeders_leechers(&self) -> Result<()> {
-        let _ = sqlx::query!(
-            r#"
-            WITH peer_counts AS (
-                SELECT
-                    torrent_id,
-                    COUNT(CASE WHEN status = 'seeding' THEN 1 END) AS current_seeders,
-                    COUNT(CASE WHEN status = 'leeching' THEN 1 END) AS current_leechers
-                FROM
-                    peers
-                GROUP BY
-                    torrent_id
-            )
-            UPDATE torrents AS t
-            SET
-                seeders = COALESCE(pc.current_seeders, 0),
-                leechers = COALESCE(pc.current_leechers, 0)
-            FROM
-                torrents AS t_alias -- Use an alias for the table in the FROM clause to avoid ambiguity
-            LEFT JOIN
-                peer_counts AS pc ON t_alias.id = pc.torrent_id
-            WHERE
-                t.id = t_alias.id;
-            "#
-        )
-        .execute(self.borrow())
-        .await?;
+    // pub async fn update_torrent_seeders_leechers(&self) -> Result<()> {
+    //     let _ = sqlx::query!(
+    //         r#"
+    //         WITH peer_counts AS (
+    //             SELECT
+    //                 torrent_id,
+    //                 COUNT(CASE WHEN status = 'seeding' THEN 1 END) AS current_seeders,
+    //                 COUNT(CASE WHEN status = 'leeching' THEN 1 END) AS current_leechers
+    //             FROM
+    //                 peers
+    //             GROUP BY
+    //                 torrent_id
+    //         )
+    //         UPDATE torrents AS t
+    //         SET
+    //             seeders = COALESCE(pc.current_seeders, 0),
+    //             leechers = COALESCE(pc.current_leechers, 0)
+    //         FROM
+    //             torrents AS t_alias -- Use an alias for the table in the FROM clause to avoid ambiguity
+    //         LEFT JOIN
+    //             peer_counts AS pc ON t_alias.id = pc.torrent_id
+    //         WHERE
+    //             t.id = t_alias.id AND
+    //             t.deleted_at IS NULL;
+    //         "#
+    //     )
+    //     .execute(self.borrow())
+    //     .await?;
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
-    pub async fn increment_torrent_completed(&self, torrent_id: i32) -> Result<()> {
+    pub async fn increment_torrent_times_completed(&self, torrent_id: i32) -> Result<()> {
         let _ = sqlx::query!(
             r#"
             UPDATE torrents
             SET
-                completed = completed + 1
+                times_completed = times_completed + 1
             WHERE
                 id = $1
             "#,
@@ -567,7 +561,7 @@ impl ConnectionPool {
         let torrents = sqlx::query_as!(
             TorrentMinimal,
             r#"
-            SELECT id, created_at, ENCODE(info_hash, 'hex') as info_hash FROM torrents
+            SELECT id, created_at, ENCODE(info_hash, 'hex') as info_hash FROM torrents WHERE deleted_at IS NULL;
             "#
         )
         .fetch_all(self.borrow())

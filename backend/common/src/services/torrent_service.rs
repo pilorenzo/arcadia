@@ -1,5 +1,5 @@
 pub fn get_announce_url(passkey: String, tracker_url: &str) -> String {
-    format!("{tracker_url}announce/{passkey}")
+    format!("{tracker_url}{passkey}/announce")
 }
 
 pub fn looks_like_url(s: &str) -> bool {

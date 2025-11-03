@@ -21,6 +21,7 @@ For development tool installation instructions, see the [Developer Setup](dev-se
 3. Set up Redis
 4. Configure and run the backend
 5. Configure and run the frontend
+6. Configure and run the tracker
 
 ## Database Setup
 
@@ -106,7 +107,7 @@ dnf install pkg-config openssl-devel
 
 ### 1. Environment Configuration
 
-Navigate to the frontend directory and configure it:
+Navigate to the backend directory and configure it:
 
 ```bash
 cd backend/api
@@ -164,6 +165,27 @@ npm run dev
 
 The frontend will be accessible at `http://localhost:5173` (or the port shown in the terminal).
 
+## Tracker Setup
+
+### 1. Environment Configuration
+
+Navigate to the tracker directory and configure it:
+
+```bash
+cd tracker/arcadia_tracker
+cp .env.example .env
+```
+
+Edit the `.env` file with your configuration.
+
+### 2. Build and Run
+
+Build and start the tracker server:
+
+```bash
+cargo run --release
+```
+
 ## Production Build
 
 For production deployment:
@@ -177,6 +199,12 @@ cargo build --release
 cargo build -p arcadia-api --release
 
 # The binary will be in target/release/arcadia-api
+```
+
+### Tracker
+```bash
+cd tracker/arcadia_tracker
+cargo build --release
 ```
 
 ### Frontend
@@ -232,5 +260,6 @@ brew services start postgresql
 
 To stop Arcadia:
 1. Stop the frontend with `Ctrl+C` in its terminal
-2. Stop the backend API with `Ctrl+C` in its terminal
-3. Optionally stop PostgreSQL if you don't need it for other applications
+2. Stop the tracker with `Ctrl+C` in its terminal and wait for its graceful shutdown
+3. Stop the backend API with `Ctrl+C` in its terminal
+4. Optionally stop PostgreSQL if you don't need it for other applications

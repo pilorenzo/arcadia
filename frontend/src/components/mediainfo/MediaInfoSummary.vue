@@ -1,7 +1,5 @@
 <template>
-  <!-- Row layout: 3 sections on one line -->
   <div class="mi-row">
-    <!-- General -->
     <div class="mi-card">
       <div class="mi-card__header">General</div>
       <DataTable :value="summary.general" size="small" class="no-header mi-nowrap-table">
@@ -9,8 +7,6 @@
         <Column field="value" header="Value" />
       </DataTable>
     </div>
-
-    <!-- Video -->
     <div class="mi-card">
       <div class="mi-card__header">Video</div>
       <DataTable :value="summary.video" size="small" class="no-header mi-nowrap-table">
@@ -18,8 +14,6 @@
         <Column field="value" header="Value" />
       </DataTable>
     </div>
-
-    <!-- Audio -->
     <div class="mi-card">
       <div class="mi-card__header">Audio</div>
       <div v-if="summary.audioLines?.length" class="mi-audio">
@@ -56,11 +50,6 @@ const summary = computed<Summary>(() => normalizeMediaInfo(props.source))
 /* Cards */
 .mi-card {
   flex: 1 1 0;
-  position: relative;
-  border: 1px solid var(--surface-700);
-  border-radius: 0.375rem;
-  background: transparent;
-  min-width: 0;
 }
 
 /* Headers */
@@ -94,12 +83,10 @@ const summary = computed<Summary>(() => normalizeMediaInfo(props.source))
 /* Audio allows wrapping */
 .mi-audio {
   padding: 0.5rem 0.75rem 2rem;
-  font-size: 0.95rem;
   line-height: 1.35rem;
   white-space: normal;
   word-break: break-word;
-}
-.mi-audio__line + .mi-audio__line {
-  margin-top: 0.25rem;
+  background-color: var(--p-surface-900);
+  border-radius: 7px;
 }
 </style>

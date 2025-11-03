@@ -21,10 +21,6 @@ const purifyHtml = (html: string) => {
   word-break: break-word;
   font-size: 13px;
   font-family: 'Courier New', Courier, monospace;
-  background-color: var(--surface-200);
-  padding: 10px;
-  border-radius: 5px;
-  border: 1px solid var(--surface-400);
   max-height: 400px;
   overflow: auto;
 }

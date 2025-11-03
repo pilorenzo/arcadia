@@ -1,5 +1,5 @@
-use arcadia_storage::models::collage::SearchCollagesQuery;
 use arcadia_storage::models::series::SearchSeriesQuery;
+use arcadia_storage::models::{collage::SearchCollagesQuery, forum::GetForumThreadPostsQuery};
 use utoipa::{
     openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
     Modify, OpenApi,
@@ -56,17 +56,18 @@ use crate::handlers::{
         crate::handlers::search::search_title_group_info_lite::exec,
         crate::handlers::search::search_torrent_requests::exec,
         crate::handlers::search::search_artists_lite::exec,
-        crate::handlers::search::search_forum_thread::exec,
         crate::handlers::search::search_collages::exec,
         crate::handlers::search::search_series::exec,
         crate::handlers::torrent_requests::create_torrent_request::exec,
         crate::handlers::torrent_requests::get_torrent_request::exec,
         crate::handlers::torrent_requests::fill_torrent_request::exec,
         crate::handlers::torrent_requests::create_torrent_request_vote::exec,
+        crate::handlers::torrent_requests::create_torrent_request_comment::exec,
         crate::handlers::gifts::create_gift::exec,
         crate::handlers::forum::get_forum::exec,
         crate::handlers::forum::get_forum_sub_category_threads::exec,
         crate::handlers::forum::get_forum_thread::exec,
+        crate::handlers::forum::get_forum_thread_posts::exec,
         crate::handlers::forum::create_forum_thread::exec,
         crate::handlers::forum::create_forum_post::exec,
         crate::handlers::wiki::create_wiki_article::exec,
@@ -91,7 +92,8 @@ use crate::handlers::{
         GetUserApplicationsQuery,
         SearchTorrentRequestsQuery,
         SearchCollagesQuery,
-        SearchSeriesQuery
+        SearchSeriesQuery,
+        GetForumThreadPostsQuery
     ),)
 )]
 pub struct ApiDoc;

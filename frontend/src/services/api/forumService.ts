@@ -15,21 +15,32 @@ export const getForumSubCategory = async (forumSubCategoryId: number): Promise<F
   return (await api.get<ForumSubCategoryHierarchy>('/forum/sub-category?id=' + forumSubCategoryId)).data
 }
 
-export type ForumThreadAndPosts = components['schemas']['ForumThreadAndPosts']
-
 export type ForumThreadHierarchy = components['schemas']['ForumThreadHierarchy']
 
 export const getForumThreads = async (params: { id: number }): Promise<ForumThreadHierarchy[]> => {
   return (await api.get<ForumThreadHierarchy[]>(`/forum/thread?id=${params.id}`)).data
 }
-export const searchForumThreads = async (params: { title: string; offset?: number; limit?: number }): Promise<ForumThreadHierarchy[]> => {
-  return (await api.get<ForumThreadHierarchy[]>(`/search/forum/thread?title=${params.title}`)).data
-}
 
 export type ForumPostHierarchy = components['schemas']['ForumPostHierarchy']
 
-export const getForumThread = async (forumThreadId: number): Promise<ForumThreadAndPosts> => {
-  return (await api.get<ForumThreadAndPosts>('/forum/thread?id=' + forumThreadId)).data
+export type ForumThreadEnriched = components['schemas']['ForumThreadEnriched']
+
+export const getForumThread = async (forumThreadId: number): Promise<ForumThreadEnriched> => {
+  return (await api.get<ForumThreadEnriched>('/forum/thread?id=' + forumThreadId)).data
+}
+
+export type PaginatedResults_ForumPostHierarchy = components['schemas']['PaginatedResults_ForumPostHierarchy']
+
+export type GetForumThreadPostsQuery = components['schemas']['GetForumThreadPostsQuery']
+
+export const getForumThreadPosts = async (query: GetForumThreadPostsQuery): Promise<PaginatedResults_ForumPostHierarchy> => {
+  return (
+    await api.get<PaginatedResults_ForumPostHierarchy>(
+      `/forum/thread/posts?thread_id=${query.thread_id}&page_size=${query.page_size}` +
+        (query.page !== null ? `&page=${query.page}` : '') +
+        (query.post_id !== null ? `&post_id=${query.post_id}` : ''),
+    )
+  ).data
 }
 
 export type UserCreatedForumPost = components['schemas']['UserCreatedForumPost']

@@ -54,7 +54,11 @@
     "created_by": "Created by",
     "started_by": "Started by",
     "created_at": "Created at",
-    "add": "Add"
+    "add": "Add",
+    "last": "Last",
+    "prev": "Prev",
+    "next": "Next",
+    "first": "First"
   },
   "auth": {
     "remember_me": "Remember me"
@@ -103,7 +107,8 @@
     "new_post": "New post",
     "new_thread": "New thread",
     "thread_name": "Thread name",
-    "discuss": "Discuss"
+    "discuss": "Discuss",
+    "go_to_last_page_to_reply": "Go to last page to reply"
   },
   "user": {
     "username": "Username",
@@ -214,7 +219,7 @@
     "torrent": "Torrent | Torrents",
     "seeders": "Seeders",
     "leechers": "Leechers",
-    "completed": "Completed",
+    "times_completed": "Completed",
     "created_at": "Uploaded at",
     "upload_torrent": "Upload torrent",
     "request_format": "Request format",
@@ -227,6 +232,7 @@
     "any_audio_bitrate_sampling": "Any audio bitrate",
     "properties": "Properties",
     "mediainfo": "MediaInfo",
+    "toggle_mediainfo": "Toggle mediainfo",
     "file_list": "File list",
     "report_torrent": "Report torrent",
     "copy_permalink": "Copy permalink",

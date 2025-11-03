@@ -1,29 +1,24 @@
 use anyhow::bail;
-use bincode::config;
-use reqwest::Client;
-use serde::{Deserialize, Serialize, Serializer};
-use sqlx::{Database, Decode};
+use indexmap::IndexMap;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use sqlx::{Database, Decode, PgPool};
 use std::{
-    collections::HashMap,
     fmt::Display,
     ops::{Deref, DerefMut},
     str::FromStr,
 };
 
-#[derive(
-    Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, bincode::Encode, bincode::Decode,
-)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct Passkey(pub [u8; 32]);
 
-#[derive(Debug, Clone, Deserialize, Serialize, bincode::Encode, bincode::Decode, PartialEq)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct User {
-    pub can_download: bool,
     pub num_seeding: u32,
     pub num_leeching: u32,
 }
 
-#[derive(Debug, Serialize, bincode::Encode, bincode::Decode)]
-pub struct Map(HashMap<u32, User>);
+#[derive(Debug, Serialize)]
+pub struct Map(pub IndexMap<u32, User>);
 
 impl FromStr for Passkey {
     type Err = anyhow::Error;
@@ -72,8 +67,18 @@ impl Serialize for Passkey {
     }
 }
 
+impl<'de> Deserialize<'de> for Passkey {
+    fn deserialize<D>(deserializer: D) -> std::prelude::v1::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        s.parse().map_err(serde::de::Error::custom)
+    }
+}
+
 impl Deref for Map {
-    type Target = HashMap<u32, User>;
+    type Target = IndexMap<u32, User>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -86,27 +91,39 @@ impl DerefMut for Map {
     }
 }
 
+#[derive(Debug)]
+pub struct DBImportUser {
+    pub id: i32,
+    pub passkey: Passkey,
+    pub num_seeding: i32,
+    pub num_leeching: i32,
+}
+
 impl Map {
-    pub async fn from_backend() -> Self {
-        let base_url =
-            std::env::var("ARCADIA_API_BASE_URL").expect("env var ARCADIA_API_BASE_URL not set");
-        let url = format!("{}/api/tracker/users", base_url);
+    pub async fn from_database(db: &PgPool) -> Self {
+        let rows = sqlx::query_as!(
+            DBImportUser,
+            r#"
+            SELECT
+                id,
+                passkey as "passkey: Passkey",
+                0::INT AS "num_seeding!",
+                0::INT AS "num_leeching!"
+            FROM users
+            "#
+        )
+        .fetch_all(db)
+        .await
+        .expect("could not get users");
 
-        let client = Client::new();
-        let api_key = std::env::var("API_KEY").expect("env var API_KEY not set");
-        let resp = client
-            .get(url)
-            .header("api_key", api_key)
-            .send()
-            .await
-            .expect("failed to fetch users");
-        let bytes = resp
-            .bytes()
-            .await
-            .expect("failed to read users response body");
-
-        let config = config::standard();
-        let (map, _): (Map, usize) = bincode::decode_from_slice(&bytes[..], config).unwrap();
+        let mut map: Map = Map(IndexMap::with_capacity(rows.len()));
+        for r in rows {
+            let user = User {
+                num_seeding: r.num_seeding as u32,
+                num_leeching: r.num_leeching as u32,
+            };
+            map.insert(r.id as u32, user);
+        }
 
         map
     }

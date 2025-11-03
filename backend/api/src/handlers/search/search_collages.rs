@@ -5,7 +5,10 @@ use actix_web::{
 };
 use arcadia_common::error::Result;
 use arcadia_storage::{
-    models::collage::{CollageSearchResponse, SearchCollagesQuery},
+    models::{
+        collage::{CollageSearchResult, SearchCollagesQuery},
+        common::PaginatedResults,
+    },
     redis::RedisPoolInterface,
 };
 
@@ -17,7 +20,7 @@ use arcadia_storage::{
     params (SearchCollagesQuery),
     description = "Case insensitive",
     responses(
-        (status = 200, description = "Successfully got the collages and some data about them", body=CollageSearchResponse),
+        (status = 200, description = "Successfully got the collages and some data about them", body=PaginatedResults<CollageSearchResult>),
     )
 )]
 pub async fn exec<R: RedisPoolInterface + 'static>(

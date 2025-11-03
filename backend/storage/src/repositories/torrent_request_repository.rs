@@ -307,71 +307,93 @@ impl ConnectionPool {
     pub async fn find_torrent_request_hierarchy(&self, torrent_request_id: i64) -> Result<Value> {
         let result = sqlx::query!(
             r#"
-            SELECT json_build_object(
-                        'torrent_request', tr,
-                        'title_group', tg,
-                        'affiliated_artists', COALESCE((
-                            SELECT json_agg(
-                                json_build_object(
-                                    'id', aa.id,
-                                    'title_group_id', aa.title_group_id,
-                                    'artist_id', aa.artist_id,
-                                    'roles', aa.roles,
-                                    'nickname', aa.nickname,
-                                    'created_at', aa.created_at,
-                                    'created_by_id', aa.created_by_id,
-                                    'artist', json_build_object(
-                                        'id', a.id,
-                                        'name', a.name,
-                                        'created_at', a.created_at,
-                                        'created_by_id', a.created_by_id,
-                                        'description', a.description,
-                                        'pictures', a.pictures,
-                                        'title_groups_amount', a.title_groups_amount,
-                                        'edition_groups_amount', a.edition_groups_amount,
-                                        'torrents_amount', a.torrents_amount,
-                                        'seeders_amount', a.seeders_amount,
-                                        'leechers_amount', a.leechers_amount,
-                                        'snatches_amount', a.snatches_amount
-                                    )
+        SELECT json_build_object(
+                    'torrent_request', tr,
+                    'title_group', tg,
+                    'affiliated_artists', COALESCE((
+                        SELECT json_agg(
+                            json_build_object(
+                                'id', aa.id,
+                                'title_group_id', aa.title_group_id,
+                                'artist_id', aa.artist_id,
+                                'roles', aa.roles,
+                                'nickname', aa.nickname,
+                                'created_at', aa.created_at,
+                                'created_by_id', aa.created_by_id,
+                                'artist', json_build_object(
+                                    'id', a.id,
+                                    'name', a.name,
+                                    'created_at', a.created_at,
+                                    'created_by_id', a.created_by_id,
+                                    'description', a.description,
+                                    'pictures', a.pictures,
+                                    'title_groups_amount', a.title_groups_amount,
+                                    'edition_groups_amount', a.edition_groups_amount,
+                                    'torrents_amount', a.torrents_amount,
+                                    'seeders_amount', a.seeders_amount,
+                                    'leechers_amount', a.leechers_amount,
+                                    'snatches_amount', a.snatches_amount
                                 )
                             )
-                            FROM affiliated_artists aa
-                            JOIN artists a ON a.id = aa.artist_id
-                            WHERE aa.title_group_id = tg.id
-                        ), '[]'::json),
-                        'series', COALESCE((
-                            SELECT json_build_object('id', s.id, 'name', s.name)
-                            FROM series s
-                            WHERE s.id = tg.series_id
-                        ), '{}'::json),
-                        'votes', (
-                            SELECT json_agg(
-                                json_build_object(
-                                    'id', trv3.id,
-                                    'torrent_request_id', trv3.torrent_request_id,
-                                    'created_at', trv3.created_at,
-                                    'created_by_id', trv3.created_by_id,
-                                    'created_by', json_build_object(
-                                        'id', u.id,
-                                        'username', u.username,
-                                        'warned', u.warned,
-                                        'banned', u.banned
-                                    ),
-                                    'bounty_upload', trv3.bounty_upload,
-                                    'bounty_bonus_points', trv3.bounty_bonus_points
-                                )
-                                ORDER BY trv3.created_at DESC
-                            )
-                            FROM torrent_request_votes trv3
-                            JOIN users u ON u.id = trv3.created_by_id
-                            WHERE trv3.torrent_request_id = tr.id
                         )
-                    ) as data
-                    FROM torrent_requests tr
-                    JOIN title_groups tg ON tr.title_group_id = tg.id
-                    WHERE tr.id = $1
-            "#,
+                        FROM affiliated_artists aa
+                        JOIN artists a ON a.id = aa.artist_id
+                        WHERE aa.title_group_id = tg.id
+                    ), '[]'::json),
+                    'series', COALESCE((
+                        SELECT json_build_object('id', s.id, 'name', s.name)
+                        FROM series s
+                        WHERE s.id = tg.series_id
+                    ), '{}'::json),
+                    'votes', COALESCE((
+                        SELECT json_agg(
+                            json_build_object(
+                                'id', trv3.id,
+                                'torrent_request_id', trv3.torrent_request_id,
+                                'created_at', trv3.created_at,
+                                'created_by_id', trv3.created_by_id,
+                                'created_by', json_build_object(
+                                    'id', u.id,
+                                    'username', u.username,
+                                    'warned', u.warned,
+                                    'banned', u.banned
+                                ),
+                                'bounty_upload', trv3.bounty_upload,
+                                'bounty_bonus_points', trv3.bounty_bonus_points
+                            )
+                            ORDER BY trv3.created_at DESC
+                        )
+                        FROM torrent_request_votes trv3
+                        JOIN users u ON u.id = trv3.created_by_id
+                        WHERE trv3.torrent_request_id = tr.id
+                    ), '[]'::json),
+                    'comments', COALESCE((
+                        SELECT json_agg(
+                            json_build_object(
+                                'id', trc.id,
+                                'torrent_request_id', trc.torrent_request_id,
+                                'created_by_id', trc.created_by_id,
+                                'created_by', json_build_object(
+                                    'id', u2.id,
+                                    'username', u2.username,
+                                    'warned', u2.warned,
+                                    'banned', u2.banned
+                                ),
+                                'content', trc.content,
+                                'created_at', trc.created_at,
+                                'updated_at', trc.updated_at
+                            )
+                            ORDER BY trc.created_at DESC
+                        )
+                        FROM torrent_request_comments trc
+                        JOIN users u2 ON u2.id = trc.created_by_id
+                        WHERE trc.torrent_request_id = tr.id
+                    ), '[]'::json)
+                ) as data
+                FROM torrent_requests tr
+                JOIN title_groups tg ON tr.title_group_id = tg.id
+                WHERE tr.id = $1
+        "#,
             torrent_request_id
         )
         .fetch_one(self.borrow())

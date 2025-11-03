@@ -1,4 +1,3 @@
-pub mod announce_repository;
 pub mod artist_repository;
 pub mod auth_repository;
 pub mod bookmark_repository;
@@ -19,9 +18,9 @@ pub mod title_group_comment_repository;
 pub mod title_group_repository;
 pub mod torrent_report_repository;
 pub mod torrent_repository;
+pub mod torrent_request_comment_repository;
 pub mod torrent_request_repository;
 pub mod torrent_request_vote_repository;
-pub mod tracker_repository;
 pub mod user_application_repository;
 pub mod user_repository;
 pub mod wiki_repository;

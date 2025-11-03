@@ -1,8 +1,11 @@
 use crate::{
     connection_pool::ConnectionPool,
-    models::collage::{
-        Collage, CollageCategory, CollageEntry, CollageSearchResponse, CollageSearchResult,
-        CollageType, SearchCollagesQuery, UserCreatedCollage, UserCreatedCollageEntry,
+    models::{
+        collage::{
+            Collage, CollageCategory, CollageEntry, CollageSearchResult, CollageType,
+            SearchCollagesQuery, UserCreatedCollage, UserCreatedCollageEntry,
+        },
+        common::PaginatedResults,
     },
 };
 use arcadia_common::error::{Error, Result};
@@ -157,7 +160,7 @@ impl ConnectionPool {
     pub async fn search_collages(
         &self,
         form: &SearchCollagesQuery,
-    ) -> Result<CollageSearchResponse> {
+    ) -> Result<PaginatedResults<CollageSearchResult>> {
         let offset = (form.page - 1) * form.page_size;
 
         let total_items: i64 = query_scalar!(
@@ -211,9 +214,11 @@ impl ConnectionPool {
         .fetch_all(self.borrow())
         .await?;
 
-        Ok(CollageSearchResponse {
+        Ok(PaginatedResults {
             results,
             total_items,
+            page: form.page,
+            page_size: form.page_size,
         })
     }
 }

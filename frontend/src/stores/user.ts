@@ -1,6 +1,7 @@
 import type { User } from '@/services/api/userService'
 import { defineStore } from 'pinia'
 
+// @ts-expect-error missing some properties, but it's okay
 const initialState: User = {
   artist_comments: 0,
   avatar: null,
@@ -20,7 +21,6 @@ const initialState: User = {
   invited: 0,
   last_seen: '',
   leeching: 0,
-  passkey: 'aaaaaaaaaaaa',
   password_hash: '',
   ratio: 0.0,
   real_downloaded: 0,

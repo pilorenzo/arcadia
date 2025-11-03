@@ -1,5 +1,3 @@
-pub mod announce;
-
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("database error: {0}")]
@@ -34,6 +32,9 @@ pub enum Error {
 
     #[error("username already exists")]
     UsernameAlreadyExists,
+
+    #[error("could not deserialize forum posts: {0}")]
+    CouldNotDeserializeForumPosts(String),
 
     #[error("could not create edition group")]
     CouldNotCreateEditionGroup(#[source] sqlx::Error),
@@ -79,6 +80,9 @@ pub enum Error {
 
     #[error("could not create torrent request vote")]
     CouldNotCreateTorrentRequestVote(#[source] sqlx::Error),
+
+    #[error("could not create torrent request comment")]
+    CouldNotCreateTorrentRequestComment(#[source] sqlx::Error),
 
     #[error("could not create torrent report")]
     CouldNotCreateTorrentReport(#[source] sqlx::Error),

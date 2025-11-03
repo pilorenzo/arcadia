@@ -199,7 +199,7 @@ const titleGroupStore = useTitleGroupStore()
 const editTitleGroupDialogVisible = ref(false)
 
 // TODO: add by extras
-const selectableSortingOptions = ['edition', 'size', 'seeders', 'completed', 'created_at']
+const selectableSortingOptions = ['edition', 'size', 'seeders', 'times_completed', 'created_at']
 
 const titleGroupAndAssociatedData = ref<TitleGroupAndAssociatedData>()
 const sortBy = ref('edition')
