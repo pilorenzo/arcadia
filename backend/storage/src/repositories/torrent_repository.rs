@@ -453,7 +453,7 @@ impl ConnectionPool {
             title_group_data AS (
                 SELECT
                     tgl.title_group_data AS lite_title_group -- 'affiliated_artists' is already inside tgl.title_group_data
-                FROM get_title_groups_and_edition_group_and_torrents_lite('', NULL, NULL, TRUE, 'title_group_original_release_date', 'desc', NULL, NULL, NULL, NULL, NULL) tgl
+                FROM get_title_groups_and_edition_group_and_torrents_lite tgl
                 JOIN title_groups tg ON tgl.title_group_id = tg.id
                 JOIN title_group_search tgs ON tg.id = tgs.title_group_id
             )

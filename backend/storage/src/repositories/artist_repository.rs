@@ -140,7 +140,7 @@ impl ConnectionPool {
                     aa.artist_id,
                     COALESCE(jsonb_agg(tgd.title_group_data), '[]'::jsonb) AS title_groups
                 FROM affiliated_artists aa
-                JOIN get_title_groups_and_edition_group_and_torrents_lite() AS tgd ON aa.title_group_id = tgd.title_group_id
+                JOIN get_title_groups_and_edition_group_and_torrents_lite AS tgd ON aa.title_group_id = tgd.title_group_id
                 WHERE aa.artist_id = $1
                 GROUP BY aa.artist_id
             ),
