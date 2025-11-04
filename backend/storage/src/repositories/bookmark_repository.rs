@@ -3,7 +3,6 @@ use crate::{
     models::bookmark::{Bookmark, UserCreatedBookmark},
 };
 use arcadia_common::error::{Error, Result};
-use serde_json::Value;
 use std::borrow::Borrow;
 
 impl ConnectionPool {
@@ -28,5 +27,23 @@ impl ConnectionPool {
         .map_err(Error::CouldNotCreateBookmark)?;
 
         Ok(created_bookmark)
+    }
+
+    pub async fn find_bookmark(&self, bookmark_id: i64) -> Result<Bookmark> {
+        let bookmark = sqlx::query_as!(
+            Bookmark,
+            r#"
+            SELECT
+                id, bookmarked_by_id, bookmarked_torrent_id, description
+            FROM bookmarks
+            WHERE id = $1
+            "#,
+            bookmark_id,
+        )
+        .fetch_one(self.borrow())
+        .await
+        .map_err(Error::CouldNotFindBookmark)?;
+
+        Ok(bookmark)
     }
 }

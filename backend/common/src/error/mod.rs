@@ -228,6 +228,9 @@ pub enum Error {
     #[error("could not create bookmark")]
     CouldNotCreateBookmark(#[source] sqlx::Error),
 
+    #[error("could not find bookmark")]
+    CouldNotFindBookmark(#[source] sqlx::Error),
+
     #[error("could not create conversation")]
     CouldNotCreateConversation(#[source] sqlx::Error),
 
