@@ -1,10 +1,13 @@
 use crate::{
     connection_pool::ConnectionPool,
     models::{
+        common::PaginatedResults,
+        edition_group::EditionGroupHierarchyLite,
         notification::NotificationReason,
+        title_group::TitleGroupHierarchyLite,
         torrent::{
-            EditedTorrent, Features, Torrent, TorrentMinimal, TorrentSearch, TorrentToDelete,
-            UploadedTorrent,
+            EditedTorrent, Features, Torrent, TorrentHierarchyLite, TorrentMinimal, TorrentSearch,
+            TorrentToDelete, UploadedTorrent,
         },
     },
     repositories::notification_repository::NotificationItemsIds,
@@ -16,8 +19,8 @@ use arcadia_common::{
 use arcadia_shared::tracker::models::torrent::InfoHash;
 use bip_metainfo::{Info, InfoBuilder, Metainfo, MetainfoBuilder, PieceLength};
 use serde_json::{json, Value};
-use sqlx::PgPool;
-use std::{borrow::Borrow, str::FromStr};
+use sqlx::{types::Json, PgPool};
+use std::{borrow::Borrow, collections::HashMap, str::FromStr};
 
 #[derive(sqlx::FromRow)]
 struct TitleGroupInfoLite {
@@ -388,10 +391,21 @@ impl ConnectionPool {
 
     pub async fn search_torrents(
         &self,
-        torrent_search: &TorrentSearch,
+        form: &TorrentSearch,
         requesting_user_id: Option<i32>,
-    ) -> Result<Value> {
-        let input = torrent_search.title_group.name.trim();
+    ) -> Result<PaginatedResults<TitleGroupHierarchyLite>> {
+        // TODO: the torrent activities table is not populated by the tracker yet
+        // once this is done, we can join on this table to get the snatched torrents
+        // for a given user
+        if form.torrent_snatched_by_id.is_some() {
+            return Ok(PaginatedResults {
+                results: Vec::new(),
+                total_items: 0,
+                page: 0,
+                page_size: 0,
+            });
+        }
+        let input = &form.title_group_name.trim();
 
         let (name, external_link) = if looks_like_url(input) {
             (None, Some(input.to_string()))
@@ -401,34 +415,197 @@ impl ConnectionPool {
             (Some(input.to_string()), None)
         };
 
-        let search_results = sqlx::query!(
+        let limit = form.page * form.page_size;
+        let offset = (form.page - 1) * form.page_size;
+
+        // we apply filters on 3 tables: title_groups, edition_groups, and torrents
+
+        // first: get title groups that have editions and torrents (and the title groups themselves)
+        // matching the filters on the 3 tables right away, thanks to the materialized view
+
+        let title_groups = sqlx::query_as!(
+            TitleGroupHierarchyLite,
             r#"
-            WITH title_group_data AS (
-                SELECT
-                    tgl.title_group_data AS lite_title_group
-                FROM get_title_groups_and_edition_group_and_torrents_lite($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) tgl
-            )
-            SELECT jsonb_agg(lite_title_group) AS title_groups
-            FROM title_group_data;
+             SELECT title_group_id AS "id!", title_group_name AS "name!", title_group_covers AS "covers!",
+             title_group_category AS "category!: _", title_group_content_type AS "content_type!: _", title_group_tags AS "tags!",
+             title_group_original_release_date AS "original_release_date!", title_group_platform AS "platform!: _",
+             '[]'::jsonb AS "edition_groups!: _",
+             '[]'::jsonb AS "affiliated_artists!: _"
+
+             FROM title_group_hierarchy_lite tgh
+
+             WHERE ($4::BOOLEAN IS NULL OR tgh.torrent_staff_checked = $4)
+             AND ($5::BOOLEAN IS NULL OR tgh.torrent_reported = $5)
+             AND ($7::INT IS NULL OR tgh.torrent_created_by_id = $7)
+
+             GROUP BY title_group_id, title_group_name, title_group_covers, title_group_category,
+             title_group_content_type, title_group_tags, title_group_original_release_date, title_group_platform
+
+             ORDER BY
+                 CASE WHEN $1 = 'title_group_original_release_date' AND $6 = 'asc' THEN title_group_original_release_date END ASC,
+                 CASE WHEN $1 = 'title_group_original_release_date' AND $6 = 'desc' THEN title_group_original_release_date END DESC,
+                 CASE WHEN $1 = 'torrent_size' AND $6 = 'asc' THEN MAX(torrent_size) END ASC,
+                 CASE WHEN $1 = 'torrent_size' AND $6 = 'desc' THEN MAX(torrent_size) END DESC,
+                 CASE WHEN $1 = 'torrent_created_at' AND $6 = 'asc' THEN MAX(torrent_created_at) END ASC,
+                 CASE WHEN $1 = 'torrent_created_at' AND $6 = 'desc' THEN MAX(torrent_created_at) END DESC,
+                 title_group_original_release_date ASC
+
+             LIMIT $2 OFFSET $3
             "#,
-            name,
-            torrent_search.torrent.staff_checked,
-            torrent_search.torrent.reported,
-            torrent_search.title_group.include_empty_groups,
-            torrent_search.sort_by.to_string(),
-            torrent_search.order.to_string(),
-            torrent_search.page_size,
-            (torrent_search.page - 1) * torrent_search.page_size,
-            torrent_search.torrent.created_by_id,
-            torrent_search.torrent.snatched_by_id,
-            requesting_user_id,
-            external_link
+            form.order_by_column.to_string(), limit, offset,
+            form.torrent_staff_checked, form.torrent_reported, form.order_by_direction.to_string(),
+            form.torrent_created_by_id
+        )
+        .fetch_all(self.borrow())
+        .await
+        .map_err(|error| Error::ErrorSearchingForTorrents(error.to_string()))?;
+
+        // amount of results for pagination
+        let total_title_groups_count = sqlx::query_scalar!(
+            r#"
+            SELECT COUNT(DISTINCT title_group_id)
+            FROM title_group_hierarchy_lite tgh
+            WHERE ($1::BOOLEAN IS NULL OR tgh.torrent_staff_checked = $1)
+              AND ($2::BOOLEAN IS NULL OR tgh.torrent_reported = $2)
+              AND ($3::INT IS NULL OR tgh.torrent_created_by_id = $3)
+            "#,
+            form.torrent_staff_checked,
+            form.torrent_reported,
+            form.torrent_created_by_id
         )
         .fetch_one(self.borrow())
         .await
         .map_err(|error| Error::ErrorSearchingForTorrents(error.to_string()))?;
 
-        Ok(serde_json::json!({"title_groups": search_results.title_groups}))
+        // second: get the edition groups that match the edition group filters, that are within the title groups
+        // from the previous step
+
+        let title_group_ids: Vec<i32> = title_groups.iter().map(|t| t.id).collect();
+
+        let edition_groups = sqlx::query_as!(
+            EditionGroupHierarchyLite,
+            r#"
+            SELECT
+                id,
+                title_group_id,
+                name,
+                release_date,
+                distributor,
+                covers,
+                source AS "source: _",
+                additional_information AS "additional_information: _",
+                '[]'::jsonb AS "torrents!: _"
+            FROM edition_groups
+            WHERE title_group_id = ANY($1)
+            "#,
+            &title_group_ids
+        )
+        .fetch_all(self.borrow())
+        .await?;
+
+        let mut grouped_editions: HashMap<i32, Vec<EditionGroupHierarchyLite>> = HashMap::new();
+
+        for eg in edition_groups {
+            grouped_editions.entry(eg.title_group_id).or_default().push(
+                EditionGroupHierarchyLite {
+                    torrents: Json(Vec::new()),
+                    ..eg
+                },
+            );
+        }
+
+        let title_groups: Vec<TitleGroupHierarchyLite> = title_groups
+            .into_iter()
+            .map(|mut tg| {
+                tg.edition_groups = Json(grouped_editions.remove(&tg.id).unwrap_or_default());
+                tg
+            })
+            .collect();
+
+        // third: get the torrents that match the torrent filters, and are in the edition groups
+        // from the previous step
+
+        let edition_group_ids: Vec<i32> = title_groups
+            .iter()
+            .flat_map(|tg| tg.edition_groups.0.iter().map(|eg| eg.id))
+            .collect();
+
+        let torrents = sqlx::query_as!(
+            TorrentHierarchyLite,
+            r#"
+            SELECT
+                id AS "id!",
+                upload_factor AS "upload_factor!",
+                download_factor AS "download_factor!",
+                seeders AS "seeders!",
+                leechers AS "leechers!",
+                times_completed AS "times_completed!",
+                snatched AS "snatched!",
+                edition_group_id AS "edition_group_id!",
+                created_at AS "created_at!: _",
+                release_name,
+                release_group,
+                trumpable AS "trumpable!",
+                staff_checked AS "staff_checked!",
+                COALESCE(languages, '{}') AS "languages!: _",
+                container AS "container!",
+                size AS "size!",
+                duration,
+                audio_codec AS "audio_codec: _",
+                audio_bitrate,
+                audio_bitrate_sampling AS "audio_bitrate_sampling: _",
+                audio_channels AS "audio_channels: _",
+                video_codec AS "video_codec: _",
+                features AS "features!: _",
+                COALESCE(subtitle_languages, '{}') AS "subtitle_languages!: _",
+                video_resolution AS "video_resolution: _",
+                video_resolution_other_x,
+                video_resolution_other_y,
+                reports AS "reports!: _",
+                COALESCE(extras, '{}') AS "extras!: _"
+            FROM torrents_and_reports tar
+            WHERE edition_group_id = ANY($1)
+            AND ($2::INT IS NULL OR tar.created_by_id = $2)
+            "#,
+            &edition_group_ids,
+            form.torrent_created_by_id
+        )
+        .fetch_all(self.borrow())
+        .await?;
+
+        let mut grouped_torrents: HashMap<i32, Vec<TorrentHierarchyLite>> = HashMap::new();
+
+        for t in torrents {
+            grouped_torrents
+                .entry(t.edition_group_id)
+                .or_default()
+                .push(t);
+        }
+
+        let title_groups = title_groups
+            .into_iter()
+            .map(|mut tg| {
+                let edition_groups_with_torrents: Vec<EditionGroupHierarchyLite> = tg
+                    .edition_groups
+                    .0
+                    .into_iter()
+                    .map(|mut eg| {
+                        eg.torrents = Json(grouped_torrents.remove(&eg.id).unwrap_or_default());
+                        eg
+                    })
+                    .collect();
+
+                tg.edition_groups = Json(edition_groups_with_torrents);
+                tg
+            })
+            .collect();
+
+        Ok(PaginatedResults {
+            results: title_groups,
+            page: form.page as u32,
+            page_size: form.page_size as u32,
+            total_items: total_title_groups_count.unwrap_or(0),
+        })
     }
 
     pub async fn find_top_torrents(&self, period: &str, amount: i64) -> Result<Value> {

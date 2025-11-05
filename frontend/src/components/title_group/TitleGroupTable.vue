@@ -95,7 +95,7 @@
         <span v-else>{{ t('general.anonymous') }}</span>
       </div>
       <Accordion :value="[]" multiple class="dense-accordion">
-        <AccordionPanel value="0" v-if="slotProps.data.reports.length !== 0">
+        <AccordionPanel value="0" v-if="slotProps.data.reports.length > 0">
           <AccordionHeader>Report information</AccordionHeader>
           <AccordionContent>
             <div class="report" v-for="report in slotProps.data.reports" :key="report.id">

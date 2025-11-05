@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT COUNT(DISTINCT title_group_id)\n            FROM title_group_hierarchy_lite tgh\n            WHERE ($1::BOOLEAN IS NULL OR tgh.torrent_staff_checked = $1)\n              AND ($2::BOOLEAN IS NULL OR tgh.torrent_reported = $2)\n              AND ($3::INT IS NULL OR tgh.torrent_created_by_id = $3)\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bool",
+        "Bool",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "f73813f7c2201f2663a210cd554578070f2d4ce64ffbe528edde40d349e83947"
+}
