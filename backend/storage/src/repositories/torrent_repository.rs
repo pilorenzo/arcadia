@@ -598,7 +598,9 @@ impl ConnectionPool {
                   tar.created_by_id = $5 OR
                   NOT tar.uploaded_as_anonymous)
                )
-           )
+            )
+
+            ORDER BY size DESC
             "#,
             &edition_group_ids,
             form.torrent_created_by_id,
