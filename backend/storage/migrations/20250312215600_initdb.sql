@@ -1030,6 +1030,7 @@ SELECT
 
     torrents.id AS torrent_id,
     torrents.created_by_id AS torrent_created_by_id,
+    torrents.uploaded_as_anonymous AS torrent_uploaded_as_anonymous,
     torrents.upload_factor AS torrent_upload_factor,
     torrents.download_factor AS torrent_download_factor,
     torrents.seeders AS torrent_seeders,

@@ -436,7 +436,15 @@ impl ConnectionPool {
 
              WHERE ($4::BOOLEAN IS NULL OR tgh.torrent_staff_checked = $4)
              AND ($5::BOOLEAN IS NULL OR tgh.torrent_reported = $5)
-             AND ($7::INT IS NULL OR tgh.torrent_created_by_id = $7)
+             AND (
+                $7::INT IS NULL OR
+                -- don't return torrents created as anonymous
+                -- unless the requesting user is the uploader
+                (tgh.torrent_created_by_id = $7 AND (
+                   tgh.torrent_created_by_id = $8 OR
+                   NOT tgh.torrent_uploaded_as_anonymous)
+                )
+            )
 
              GROUP BY title_group_id, title_group_name, title_group_covers, title_group_category,
              title_group_content_type, title_group_tags, title_group_original_release_date, title_group_platform
@@ -452,9 +460,14 @@ impl ConnectionPool {
 
              LIMIT $2 OFFSET $3
             "#,
-            form.order_by_column.to_string(), limit, offset,
-            form.torrent_staff_checked, form.torrent_reported, form.order_by_direction.to_string(),
-            form.torrent_created_by_id
+            form.order_by_column.to_string(),
+            limit,
+            offset,
+            form.torrent_staff_checked,
+            form.torrent_reported,
+            form.order_by_direction.to_string(),
+            form.torrent_created_by_id,
+            requesting_user_id
         )
         .fetch_all(self.borrow())
         .await
@@ -467,11 +480,20 @@ impl ConnectionPool {
             FROM title_group_hierarchy_lite tgh
             WHERE ($1::BOOLEAN IS NULL OR tgh.torrent_staff_checked = $1)
               AND ($2::BOOLEAN IS NULL OR tgh.torrent_reported = $2)
-              AND ($3::INT IS NULL OR tgh.torrent_created_by_id = $3)
+              AND (
+                 $3::INT IS NULL OR
+                 -- don't return torrents created as anonymous
+                 -- unless the requesting user is the uploader
+                 (tgh.torrent_created_by_id = $3 AND (
+                    tgh.torrent_created_by_id = $4 OR
+                    NOT tgh.torrent_uploaded_as_anonymous)
+                 )
+             )
             "#,
             form.torrent_staff_checked,
             form.torrent_reported,
-            form.torrent_created_by_id
+            form.torrent_created_by_id,
+            requesting_user_id
         )
         .fetch_one(self.borrow())
         .await
