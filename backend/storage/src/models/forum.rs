@@ -1,4 +1,4 @@
-use chrono::{DateTime, Local};
+use chrono::{DateTime, Local, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
 use utoipa::{IntoParams, ToSchema};
@@ -139,9 +139,9 @@ pub struct ForumPostHierarchy {
     pub id: i64,
     pub forum_thread_id: i64,
     #[schema(value_type = String, format = DateTime)]
-    pub created_at: DateTime<Local>,
+    pub created_at: DateTime<Utc>,
     #[schema(value_type = String, format = DateTime)]
-    pub updated_at: DateTime<Local>,
+    pub updated_at: DateTime<Utc>,
     pub created_by: UserLiteAvatar,
     pub content: String,
     pub sticky: bool,
