@@ -1,6 +1,6 @@
 <template>
   <div v-if="search_results">
-    <TorrentSearchInputs v-if="initialForm" ref="searchInputsRef" class="torrent-search-inputs" @search="search" :loading :initialForm="initialForm" />
+    <TorrentSearchInputs v-if="initialForm" ref="searchInputsRef" class="torrent-search-inputs" :loading :initialForm="initialForm" />
     <PaginatedResults
       v-if="initialForm"
       :totalPages
@@ -25,6 +25,8 @@ import { useRoute } from 'vue-router'
 import type { VNodeRef } from 'vue'
 import PaginatedResults from '@/components/PaginatedResults.vue'
 import { computed } from 'vue'
+import { watch } from 'vue'
+import { nextTick } from 'vue'
 
 const route = useRoute()
 
@@ -33,26 +35,29 @@ const searchInputsRef = ref<VNodeRef | null>(null)
 const search_results = ref<TitleGroupHierarchyLite[]>([])
 const titleGroupPreview = ref<titleGroupPreviewMode>('table') // TODO: make a select button to switch from cover-only to table
 const loading = ref(false)
-const initialForm = ref<TorrentSearch>()
+const initialForm = ref<TorrentSearch | null>(null)
 const totalResults = ref(0)
 const pageSize = ref(0)
 const totalPages = computed(() => Math.ceil(totalResults.value / pageSize.value))
 
 const search = async (torrentSearch: TorrentSearch) => {
-  loading.value = true
   const results = await searchTorrentsLite(torrentSearch).finally(() => {
     loading.value = false
   })
+  // page.value = torrentSearch.page
   pageSize.value = torrentSearch.page_size
   totalResults.value = results.total_items
   search_results.value = results.results
 }
 
-const loadInitialForm = async () => {
+const loadFormFromUrl = async () => {
+  loading.value = true
+  initialForm.value = null
+  await nextTick()
   const form: TorrentSearch = {
     title_group_name: route.query.title_group_name?.toString() ?? '',
     page: route.query.page ? parseInt(route.query.page as string) : 1,
-    page_size: route.query.page_size ? parseInt(route.query.page_size as string) : 20,
+    page_size: route.query.page_size ? parseInt(route.query.page_size as string) : 10,
     torrent_created_by_id: route.query.torrent_created_by_id ? parseInt(route.query.torrent_created_by_id as string) : null,
     torrent_snatched_by_id: route.query.torrent_snatched_by_id ? parseInt(route.query.torrent_snatched_by_id as string) : null,
     torrent_staff_checked: route.query.torrent_staff_checked === 'true' ? true : null,
@@ -69,8 +74,16 @@ const loadInitialForm = async () => {
 }
 
 onMounted(async () => {
-  loadInitialForm()
+  loadFormFromUrl()
 })
+
+watch(
+  () => route.query,
+  () => {
+    loadFormFromUrl()
+  },
+  { deep: true },
+)
 </script>
 
 <style scoped>

@@ -909,6 +909,11 @@ SELECT
     t.video_resolution,
     t.video_resolution_other_x,
     t.video_resolution_other_y,
+    (EXISTS (
+        SELECT 1
+        FROM torrent_reports tr
+        WHERE tr.reported_torrent_id = t.id
+    )) AS reported,
     CASE
         WHEN EXISTS (SELECT 1 FROM torrent_reports WHERE reported_torrent_id = t.id) THEN json_agg(row_to_json(tr))
         ELSE '[]'::json
@@ -1090,4 +1095,9 @@ execute procedure refresh_materialized_view_title_group_hierarchy_lite();
 create trigger refresh_materialized_view_title_group_hierarchy_lite
 after insert or update or delete or truncate
 on title_groups for each statement
+execute procedure refresh_materialized_view_title_group_hierarchy_lite();
+
+create trigger refresh_materialized_view_title_group_hierarchy_lite
+after insert or update or delete or truncate
+on torrent_reports for each statement
 execute procedure refresh_materialized_view_title_group_hierarchy_lite();

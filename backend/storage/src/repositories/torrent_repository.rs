@@ -587,10 +587,24 @@ impl ConnectionPool {
                 COALESCE(extras, '{}') AS "extras!: _"
             FROM torrents_and_reports tar
             WHERE edition_group_id = ANY($1)
-            AND ($2::INT IS NULL OR tar.created_by_id = $2)
+
+            AND ($3::BOOLEAN IS NULL OR tar.staff_checked = $3)
+            AND ($4::BOOLEAN IS NULL OR tar.reported = $4)
+            AND (
+               $2::INT IS NULL OR
+               -- don't return torrents created as anonymous
+               -- unless the requesting user is the uploader
+               (tar.created_by_id = $2 AND (
+                  tar.created_by_id = $5 OR
+                  NOT tar.uploaded_as_anonymous)
+               )
+           )
             "#,
             &edition_group_ids,
-            form.torrent_created_by_id
+            form.torrent_created_by_id,
+            form.torrent_staff_checked,
+            form.torrent_reported,
+            requesting_user_id,
         )
         .fetch_all(self.borrow())
         .await?;

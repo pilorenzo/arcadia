@@ -87,6 +87,7 @@ import { Dropdown, InputNumber } from 'primevue'
 import type { TorrentSearch } from '@/services/api/torrentService'
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { watch } from 'vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -96,15 +97,11 @@ const props = defineProps<{
   initialForm: TorrentSearch
 }>()
 
-const emit = defineEmits<{
-  search: [form: TorrentSearch]
-}>()
-
 const sortByOptions = ref([
   { label: t('torrent.created_at'), value: 'torrent_created_at' },
   { label: t('torrent.size'), value: 'torrent_size' },
   { label: t('title_group.original_release_date'), value: 'title_group_original_release_date' },
-  { label: t('torrent.snatched_at'), value: 'torrent_snatched_at' },
+  // { label: t('torrent.snatched_at'), value: 'torrent_snatched_at' },
 ])
 const orderOptions = [
   { label: t('general.ascending'), value: 'asc' },
@@ -134,7 +131,7 @@ const changePage = (page: number) => {
 }
 const search = () => {
   router.push({ query: searchForm.value })
-  emit('search', searchForm.value)
+  // a search will be triggered by the query changes through a watcher
 }
 defineExpose({
   searchForm,
@@ -144,6 +141,17 @@ defineExpose({
 onMounted(async () => {
   searchForm.value = props.initialForm
 })
+
+watch(
+  () => searchForm.value,
+  (newVal, oldVal) => {
+    // ignore if only `page` changed
+    if (newVal.page === oldVal.page) {
+      searchForm.value.page = 1
+    }
+  },
+  { deep: true },
+)
 </script>
 
 <style>
