@@ -1,15 +1,8 @@
 <template>
   <div v-if="search_results">
-    <TorrentSearchInputs
-      ref="searchInputsRef"
-      class="torrent-search-inputs"
-      @search="search"
-      :loading
-      :initialForm="initialForm"
-      :showStaffOptions="userStore.class === 'staff'"
-    />
+    <TorrentSearchInputs v-if="initialForm" ref="searchInputsRef" class="torrent-search-inputs" @search="search" :loading :initialForm="initialForm" />
     <PaginatedResults
-      v-if="search_results.length > 0"
+      v-if="initialForm"
       :totalPages
       :initialPage="initialForm.page"
       :totalItems="totalResults"
@@ -29,33 +22,20 @@ import TorrentSearchInputs from '@/components/torrent/TorrentSearchInputs.vue'
 import TitleGroupList from '@/components/title_group/TitleGroupList.vue'
 import type { titleGroupPreviewMode } from '@/components/title_group/TitleGroupList.vue'
 import { useRoute } from 'vue-router'
-import { useUserStore } from '@/stores/user'
 import type { VNodeRef } from 'vue'
 import PaginatedResults from '@/components/PaginatedResults.vue'
 import { computed } from 'vue'
 
 const route = useRoute()
-const userStore = useUserStore()
 
 const searchInputsRef = ref<VNodeRef | null>(null)
 
 const search_results = ref<TitleGroupHierarchyLite[]>([])
 const titleGroupPreview = ref<titleGroupPreviewMode>('table') // TODO: make a select button to switch from cover-only to table
 const loading = ref(false)
-const initialForm = ref<TorrentSearch>({
-  title_group_name: '',
-  title_group_include_empty_groups: false,
-  torrent_created_by_id: null,
-  torrent_snatched_by_id: null,
-  torrent_staff_checked: false,
-  torrent_reported: null,
-  page: 1,
-  page_size: 10,
-  order_by_column: 'torrent_created_at',
-  order_by_direction: 'desc',
-})
+const initialForm = ref<TorrentSearch>()
 const totalResults = ref(0)
-const pageSize = ref(initialForm.value.page_size)
+const pageSize = ref(0)
 const totalPages = computed(() => Math.ceil(totalResults.value / pageSize.value))
 
 const search = async (torrentSearch: TorrentSearch) => {
@@ -69,14 +49,22 @@ const search = async (torrentSearch: TorrentSearch) => {
 }
 
 const loadInitialForm = async () => {
-  initialForm.value.title_group_name = route.query.title_group_name?.toString() ?? ''
-  initialForm.value.torrent_created_by_id = route.query.created_by_id ? parseInt(route.query.created_by_id as string) : null
-  initialForm.value.torrent_snatched_by_id = route.query.snatched_by_id ? parseInt(route.query.snatched_by_id as string) : null
-  initialForm.value.page = route.query.page ? parseInt(route.query.page as string) : 1
-  if (userStore.class === 'staff') {
-    initialForm.value.torrent_staff_checked = false
-    initialForm.value.torrent_reported = null
+  const form: TorrentSearch = {
+    title_group_name: route.query.title_group_name?.toString() ?? '',
+    page: route.query.page ? parseInt(route.query.page as string) : 1,
+    page_size: route.query.page_size ? parseInt(route.query.page_size as string) : 20,
+    torrent_created_by_id: route.query.torrent_created_by_id ? parseInt(route.query.torrent_created_by_id as string) : null,
+    torrent_snatched_by_id: route.query.torrent_snatched_by_id ? parseInt(route.query.torrent_snatched_by_id as string) : null,
+    torrent_staff_checked: route.query.torrent_staff_checked === 'true' ? true : null,
+    torrent_reported: route.query.torrent_reported === 'true' ? true : null,
+    // @ts-expect-error what is placed in this query always comes from the form, so there shouldn't be a wrong value
+    order_by_column: route.query.order_by_column ? (route.query.order_by_column as string) : 'torrent_created_at',
+    // @ts-expect-error what is placed in this query always comes from the form, so there shouldn't be a wrong value
+    order_by_direction: route.query.order_by_direction ? (route.query.order_by_direction as string) : 'desc',
+    title_group_include_empty_groups: route.query.title_group_include_empty_groups === 'true' ? true : false,
   }
+  initialForm.value = form
+  pageSize.value = initialForm.value.page_size
   search(initialForm.value)
 }
 

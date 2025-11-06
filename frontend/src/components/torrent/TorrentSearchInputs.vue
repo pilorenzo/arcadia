@@ -45,7 +45,7 @@
           />
         </div>
       </div>
-      <div class="staff-options line" v-if="showStaffOptions">
+      <div class="line">
         <div class="dropdown">
           <label>{{ t('torrent.staff_checked') }}</label>
           <Dropdown
@@ -70,7 +70,7 @@
         </div>
       </div>
       <div class="flex justify-content-center" style="margin-top: 15px">
-        <Button :loading :label="t('general.search')" @click="emit('search', searchForm)" />
+        <Button :loading :label="t('general.search')" @click="search" />
       </div>
     </div>
   </ContentContainer>
@@ -86,13 +86,14 @@ import Button from 'primevue/button'
 import { Dropdown, InputNumber } from 'primevue'
 import type { TorrentSearch } from '@/services/api/torrentService'
 import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
 const { t } = useI18n()
+const router = useRouter()
 
 const props = defineProps<{
   loading: boolean
   initialForm: TorrentSearch
-  showStaffOptions: boolean
 }>()
 
 const emit = defineEmits<{
@@ -129,6 +130,10 @@ const searchForm = ref<TorrentSearch>({
 })
 const changePage = (page: number) => {
   searchForm.value.page = page
+  search()
+}
+const search = () => {
+  router.push({ query: searchForm.value })
   emit('search', searchForm.value)
 }
 defineExpose({
