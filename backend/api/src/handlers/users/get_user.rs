@@ -6,7 +6,7 @@ use actix_web::{
 use arcadia_common::error::Result;
 use arcadia_storage::{
     models::{
-        torrent::{TorrentSearch, TorrentSearchOrder, TorrentSearchSortField},
+        torrent::{TorrentSearch, TorrentSearchOrderByColumn, TorrentSearchOrderByDirection},
         user::PublicProfile,
     },
     redis::RedisPoolInterface,
@@ -41,7 +41,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
     let user = arc.pool.find_user_profile(&query.id).await?;
 
     let mut torrent_search = TorrentSearch {
-        title_group_name: String::from(""),
+        title_group_name: None,
         title_group_include_empty_groups: false,
         torrent_reported: None,
         torrent_staff_checked: None,
@@ -49,8 +49,10 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         torrent_snatched_by_id: None,
         page: 1,
         page_size: 5,
-        order_by_column: TorrentSearchSortField::TorrentCreatedAt,
-        order_by_direction: TorrentSearchOrder::Desc,
+        order_by_column: TorrentSearchOrderByColumn::TorrentCreatedAt,
+        order_by_direction: TorrentSearchOrderByDirection::Desc,
+        artist_id: None,
+        collage_id: None,
     };
     let uploaded_torrents = arc
         .pool
@@ -58,7 +60,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .await?;
     torrent_search.torrent_snatched_by_id = Some(query.id);
     torrent_search.torrent_created_by_id = None;
-    torrent_search.order_by_column = TorrentSearchSortField::TorrentSnatchedAt;
+    torrent_search.order_by_column = TorrentSearchOrderByColumn::TorrentSnatchedAt;
     let snatched_torrents = arc
         .pool
         .search_torrents(&torrent_search, Some(user.id))

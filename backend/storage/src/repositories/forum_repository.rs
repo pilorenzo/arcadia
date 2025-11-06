@@ -11,7 +11,7 @@ use crate::{
     },
 };
 use arcadia_common::error::{Error, Result};
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Utc};
 use serde_json::Value;
 use sqlx::{prelude::FromRow, PgPool};
 use std::borrow::Borrow;

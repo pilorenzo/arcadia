@@ -405,15 +405,15 @@ impl ConnectionPool {
                 page_size: 0,
             });
         }
-        let input = &form.title_group_name.trim();
+        // let input = &form.title_group_name.trim();
 
-        let (name, external_link) = if looks_like_url(input) {
-            (None, Some(input.to_string()))
-        } else if input.trim().is_empty() {
-            (None, None)
-        } else {
-            (Some(input.to_string()), None)
-        };
+        // let (name, external_link) = if looks_like_url(input) {
+        //     (None, Some(input.to_string()))
+        // } else if input.trim().is_empty() {
+        //     (None, None)
+        // } else {
+        //     (Some(input.to_string()), None)
+        // };
 
         let limit = form.page * form.page_size;
         let offset = (form.page - 1) * form.page_size;
@@ -445,6 +445,10 @@ impl ConnectionPool {
                    NOT tgh.torrent_uploaded_as_anonymous)
                 )
             )
+            AND (
+                $9::BIGINT IS NULL OR
+                EXISTS (SELECT 1 FROM affiliated_artists aa WHERE aa.title_group_id = tgh.title_group_id AND aa.artist_id = $9)
+            )
 
              GROUP BY title_group_id, title_group_name, title_group_covers, title_group_category,
              title_group_content_type, title_group_tags, title_group_original_release_date, title_group_platform
@@ -467,7 +471,8 @@ impl ConnectionPool {
             form.torrent_reported,
             form.order_by_direction.to_string(),
             form.torrent_created_by_id,
-            requesting_user_id
+            requesting_user_id,
+            form.artist_id
         )
         .fetch_all(self.borrow())
         .await

@@ -427,7 +427,7 @@ pub struct EditedTorrent {
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Display)]
-pub enum TorrentSearchSortField {
+pub enum TorrentSearchOrderByColumn {
     #[serde(rename = "torrent_created_at")]
     #[strum(serialize = "torrent_created_at")]
     TorrentCreatedAt,
@@ -443,7 +443,7 @@ pub enum TorrentSearchSortField {
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Display)]
-pub enum TorrentSearchOrder {
+pub enum TorrentSearchOrderByDirection {
     #[serde(rename = "asc")]
     #[strum(serialize = "asc")]
     Asc,
@@ -454,20 +454,22 @@ pub enum TorrentSearchOrder {
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct TorrentSearch {
-    pub title_group_name: String,
+    // title group fields
+    pub title_group_name: Option<String>,
     pub title_group_include_empty_groups: bool,
-
+    // torrent fields
     pub torrent_reported: Option<bool>,
     pub torrent_staff_checked: Option<bool>,
     pub torrent_created_by_id: Option<i32>,
     pub torrent_snatched_by_id: Option<i32>,
-
-    // pub title_group: TorrentSearchTitleGroup,
-    // pub torrent: TorrentSearchTorrent,
+    // link to other tables
+    pub artist_id: Option<i64>,
+    pub collage_id: Option<i32>,
+    // pagination and ordering
     pub page: i64,
     pub page_size: i64,
-    pub order_by_column: TorrentSearchSortField,
-    pub order_by_direction: TorrentSearchOrder,
+    pub order_by_column: TorrentSearchOrderByColumn,
+    pub order_by_direction: TorrentSearchOrderByDirection,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
