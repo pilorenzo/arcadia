@@ -168,3 +168,26 @@ pub struct GetForumThreadPostsQuery {
     pub page_size: u32,
     pub post_id: Option<i64>,
 }
+
+#[derive(Debug, Deserialize, Serialize, FromRow, ToSchema)]
+pub struct ForumSearchResult {
+    pub forum_thread_name: String,
+    pub forum_thread_id: i64,
+    pub forum_post: String,
+    pub forum_post_id: i64,
+    #[schema(value_type = String, format = DateTime)]
+    pub forum_post_created_at: DateTime<Utc>,
+    pub forum_post_created_by_id: i32,
+    pub forum_post_created_by_username: String,
+    pub forum_sub_category_name: String,
+    pub forum_sub_category_id: i32,
+    pub forum_category_name: String,
+    pub forum_category_id: i32,
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema, IntoParams)]
+pub struct ForumSearchForm {
+    pub thread_name: String,
+    pub page: u32,
+    pub page_size: u32,
+}

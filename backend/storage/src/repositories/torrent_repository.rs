@@ -14,7 +14,7 @@ use crate::{
 };
 use arcadia_common::{
     error::{Error, Result},
-    services::torrent_service::{get_announce_url, looks_like_url},
+    services::torrent_service::get_announce_url,
 };
 use arcadia_shared::tracker::models::torrent::InfoHash;
 use bip_metainfo::{Info, InfoBuilder, Metainfo, MetainfoBuilder, PieceLength};

@@ -9,7 +9,7 @@ use sqlx::{prelude::FromRow, types::Json};
 use strum::{Display, EnumString};
 use utoipa::{IntoParams, ToSchema};
 
-use super::{title_group::TitleGroupHierarchyLite, torrent_report::TorrentReport, user::UserLite};
+use super::{torrent_report::TorrentReport, user::UserLite};
 
 #[derive(Debug, Deserialize, Serialize, sqlx::Type, ToSchema)]
 #[sqlx(type_name = "audio_codec_enum")]

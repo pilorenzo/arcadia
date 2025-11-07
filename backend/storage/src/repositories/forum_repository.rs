@@ -3,9 +3,9 @@ use crate::{
     models::{
         common::PaginatedResults,
         forum::{
-            ForumPost, ForumPostAndThreadName, ForumPostHierarchy, ForumThread,
-            ForumThreadEnriched, GetForumThreadPostsQuery, UserCreatedForumPost,
-            UserCreatedForumThread,
+            ForumPost, ForumPostAndThreadName, ForumPostHierarchy, ForumSearchForm,
+            ForumSearchResult, ForumThread, ForumThreadEnriched, GetForumThreadPostsQuery,
+            UserCreatedForumPost, UserCreatedForumThread,
         },
         user::UserLiteAvatar,
     },
@@ -449,5 +449,65 @@ impl ConnectionPool {
         .fetch_all(self.borrow())
         .await
         .map_err(Error::CouldNotFindForumThreadsFirstPost)
+    }
+
+    pub async fn search_forum_threads(
+        &self,
+        form: ForumSearchForm,
+    ) -> Result<PaginatedResults<ForumSearchResult>> {
+        let limit = form.page as i64 * form.page_size as i64;
+        let offset = (form.page - 1) as i64 * form.page_size as i64;
+
+        let results = sqlx::query_as!(
+            ForumSearchResult,
+            r#"
+            SELECT
+                t.name AS forum_thread_name,
+                t.id AS forum_thread_id,
+                p.content AS forum_post,
+                p.id AS forum_post_id,
+                p.created_at AS forum_post_created_at,
+                p.created_by_id AS forum_post_created_by_id,
+                u.username AS forum_post_created_by_username,
+                s.name AS forum_sub_category_name,
+                s.id AS forum_sub_category_id,
+                c.name AS forum_category_name,
+                c.id AS forum_category_id
+            FROM forum_threads t
+            JOIN forum_posts p ON p.forum_thread_id = t.id
+            JOIN forum_sub_categories s ON s.id = t.forum_sub_category_id
+            JOIN forum_categories c ON c.id = s.forum_category_id
+            JOIN users u ON u.id = p.created_by_id
+
+            WHERE t.name ILIKE '%' || $1 || '%'
+
+            ORDER BY p.created_at DESC
+
+            LIMIT $2 OFFSET $3
+            "#,
+            form.thread_name,
+            limit,
+            offset
+        )
+        .fetch_all(self.borrow())
+        .await
+        .map_err(Error::CouldNotFindForumThreadsFirstPost)?;
+
+        let total_results = sqlx::query!(
+            "SELECT COUNT(*) AS total FROM forum_threads WHERE name ILIKE '%' || $1 || '%'",
+            form.thread_name
+        )
+        .fetch_one(self.borrow())
+        .await
+        .map_err(Error::CouldNotSearchForumThreads)?
+        .total
+        .unwrap_or(0);
+
+        Ok(PaginatedResults {
+            results,
+            total_items: total_results,
+            page: form.page,
+            page_size: form.page_size,
+        })
     }
 }
