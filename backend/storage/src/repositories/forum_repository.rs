@@ -12,7 +12,7 @@ use crate::{
 };
 use arcadia_common::error::{Error, Result};
 use chrono::{DateTime, Utc};
-use serde_json::Value;
+use serde_json::{json, Value};
 use sqlx::{prelude::FromRow, PgPool};
 use std::borrow::Borrow;
 
@@ -117,7 +117,7 @@ impl ConnectionPool {
         Ok(created_forum_thread)
     }
 
-    pub async fn find_forum_overview(&self) -> Result<Value> {
+    pub async fn find_forum_cateogries_hierarchy(&self) -> Result<Value> {
         let forum_overview = sqlx::query!(
             r#"
             SELECT
@@ -186,7 +186,12 @@ impl ConnectionPool {
         .await
         .expect("error getting forums");
 
-        Ok(forum_overview.forum_overview.unwrap())
+        Ok(forum_overview
+            .forum_overview
+            .unwrap()
+            .get("forum_categories")
+            .unwrap_or(&json!([]))
+            .to_owned())
     }
 
     pub async fn find_forum_sub_category_threads(
@@ -453,7 +458,7 @@ impl ConnectionPool {
 
     pub async fn search_forum_threads(
         &self,
-        form: ForumSearchForm,
+        form: &ForumSearchForm,
     ) -> Result<PaginatedResults<ForumSearchResult>> {
         let limit = form.page as i64 * form.page_size as i64;
         let offset = (form.page - 1) as i64 * form.page_size as i64;
@@ -462,28 +467,34 @@ impl ConnectionPool {
             ForumSearchResult,
             r#"
             SELECT
-                t.name AS forum_thread_name,
-                t.id AS forum_thread_id,
-                p.content AS forum_post,
-                p.id AS forum_post_id,
-                p.created_at AS forum_post_created_at,
-                p.created_by_id AS forum_post_created_by_id,
-                u.username AS forum_post_created_by_username,
-                s.name AS forum_sub_category_name,
-                s.id AS forum_sub_category_id,
-                c.name AS forum_category_name,
-                c.id AS forum_category_id
+                t.name AS thread_name,
+                t.id AS thread_id,
+                p.content AS post,
+                p.id AS post_id,
+                p.created_at AS post_created_at,
+                p.created_by_id AS post_created_by_id,
+                u.username AS post_created_by_username,
+                s.name AS sub_category_name,
+                s.id AS sub_category_id,
+                c.name AS category_name,
+                c.id AS category_id
             FROM forum_threads t
-            JOIN forum_posts p ON p.forum_thread_id = t.id
+            JOIN LATERAL (
+                SELECT p.*
+                FROM forum_posts p
+                WHERE p.forum_thread_id = t.id
+                ORDER BY p.created_at DESC
+                LIMIT 1
+            ) p ON TRUE
+            JOIN users u ON u.id = p.created_by_id
             JOIN forum_sub_categories s ON s.id = t.forum_sub_category_id
             JOIN forum_categories c ON c.id = s.forum_category_id
-            JOIN users u ON u.id = p.created_by_id
 
-            WHERE t.name ILIKE '%' || $1 || '%'
+            WHERE $1::TEXT IS NULL OR t.name ILIKE '%' || $1 || '%'
 
             ORDER BY p.created_at DESC
 
-            LIMIT $2 OFFSET $3
+            LIMIT $2 OFFSET $3;
             "#,
             form.thread_name,
             limit,

@@ -69,6 +69,7 @@ pub struct UserCreatedForumPost {
 #[derive(Debug, Deserialize, Serialize, FromRow, ToSchema)]
 pub struct ForumOverview {
     forum_categories: Vec<ForumCategoryHierarchy>,
+    latest_posts_in_threads: Vec<ForumSearchResult>,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow, ToSchema)]
@@ -171,23 +172,23 @@ pub struct GetForumThreadPostsQuery {
 
 #[derive(Debug, Deserialize, Serialize, FromRow, ToSchema)]
 pub struct ForumSearchResult {
-    pub forum_thread_name: String,
-    pub forum_thread_id: i64,
-    pub forum_post: String,
-    pub forum_post_id: i64,
+    pub thread_name: String,
+    pub thread_id: i64,
+    pub post: String,
+    pub post_id: i64,
     #[schema(value_type = String, format = DateTime)]
-    pub forum_post_created_at: DateTime<Utc>,
-    pub forum_post_created_by_id: i32,
-    pub forum_post_created_by_username: String,
-    pub forum_sub_category_name: String,
-    pub forum_sub_category_id: i32,
-    pub forum_category_name: String,
-    pub forum_category_id: i32,
+    pub post_created_at: DateTime<Utc>,
+    pub post_created_by_id: i32,
+    pub post_created_by_username: String,
+    pub sub_category_name: String,
+    pub sub_category_id: i32,
+    pub category_name: String,
+    pub category_id: i32,
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct ForumSearchForm {
-    pub thread_name: String,
+    pub thread_name: Option<String>,
     pub page: u32,
     pub page_size: u32,
 }

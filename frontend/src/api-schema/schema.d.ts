@@ -1304,6 +1304,7 @@ export interface components {
         };
         ForumOverview: {
             forum_categories: components["schemas"]["ForumCategoryHierarchy"][];
+            latest_posts_in_threads: components["schemas"]["ForumSearchResult"][];
         };
         ForumPost: {
             content: string;
@@ -1346,6 +1347,25 @@ export interface components {
             sticky: boolean;
             /** Format: date-time */
             updated_at: string;
+        };
+        ForumSearchResult: {
+            /** Format: int32 */
+            category_id: number;
+            category_name: string;
+            post: string;
+            /** Format: date-time */
+            post_created_at: string;
+            /** Format: int32 */
+            post_created_by_id: number;
+            post_created_by_username: string;
+            /** Format: int64 */
+            post_id: number;
+            /** Format: int32 */
+            sub_category_id: number;
+            sub_category_name: string;
+            /** Format: int64 */
+            thread_id: number;
+            thread_name: string;
         };
         ForumSubCategoryHierarchy: {
             category: components["schemas"]["ForumCategoryLite"];
@@ -2297,14 +2317,18 @@ export interface components {
             user_votes_amount: number;
         };
         TorrentSearch: {
-            order_by_column: components["schemas"]["TorrentSearchSortField"];
-            order_by_direction: components["schemas"]["TorrentSearchOrder"];
+            /** Format: int64 */
+            artist_id?: number | null;
+            /** Format: int32 */
+            collage_id?: number | null;
+            order_by_column: components["schemas"]["TorrentSearchOrderByColumn"];
+            order_by_direction: components["schemas"]["TorrentSearchOrderByDirection"];
             /** Format: int64 */
             page: number;
             /** Format: int64 */
             page_size: number;
             title_group_include_empty_groups: boolean;
-            title_group_name: string;
+            title_group_name?: string | null;
             /** Format: int32 */
             torrent_created_by_id?: number | null;
             torrent_reported?: boolean | null;
@@ -2313,9 +2337,9 @@ export interface components {
             torrent_staff_checked?: boolean | null;
         };
         /** @enum {string} */
-        TorrentSearchOrder: "asc" | "desc";
+        TorrentSearchOrderByColumn: "torrent_created_at" | "torrent_size" | "torrent_snatched_at" | "title_group_original_release_date";
         /** @enum {string} */
-        TorrentSearchSortField: "torrent_created_at" | "torrent_size" | "torrent_snatched_at" | "title_group_original_release_date";
+        TorrentSearchOrderByDirection: "asc" | "desc";
         TorrentToDelete: {
             displayed_reason?: string | null;
             /** Format: int32 */
@@ -3480,16 +3504,18 @@ export interface operations {
     "Search torrents": {
         parameters: {
             query: {
-                title_group_name: string;
+                title_group_name?: string | null;
                 title_group_include_empty_groups: boolean;
                 torrent_reported?: boolean | null;
                 torrent_staff_checked?: boolean | null;
                 torrent_created_by_id?: number | null;
                 torrent_snatched_by_id?: number | null;
+                artist_id?: number | null;
+                collage_id?: number | null;
                 page: number;
                 page_size: number;
-                order_by_column: components["schemas"]["TorrentSearchSortField"];
-                order_by_direction: components["schemas"]["TorrentSearchOrder"];
+                order_by_column: components["schemas"]["TorrentSearchOrderByColumn"];
+                order_by_direction: components["schemas"]["TorrentSearchOrderByDirection"];
             };
             header?: never;
             path?: never;

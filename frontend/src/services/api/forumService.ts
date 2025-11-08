@@ -58,3 +58,5 @@ export type ForumThread = components['schemas']['ForumThread']
 export const postForumThread = async (form: UserCreatedForumThread): Promise<ForumThread> => {
   return (await api.post<ForumThread>('/forum/thread', form)).data
 }
+
+export type ForumSearchResult = components['schemas']['ForumSearchResult']
