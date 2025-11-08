@@ -1,6 +1,6 @@
 <template>
   <DataTable :value="searchResults" size="small">
-    <Column :header="`${t('forum.category')} > ${t('forum.subcategory')}`" style="width: 20%">
+    <Column :header="`${t('forum.category')} > ${t('forum.subcategory')}`" style="width: 17%">
       <template #body="slotProps">
         <RouterLink to="/forum">
           {{ slotProps.data.category_name }}

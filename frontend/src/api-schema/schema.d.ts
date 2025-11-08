@@ -1468,6 +1468,7 @@ export interface components {
             sent_at: string;
         };
         HomePage: {
+            latest_posts_in_threads: components["schemas"]["ForumSearchResult"][];
             latest_uploads: components["schemas"]["TitleGroupLite"][];
             recent_announcements: components["schemas"]["ForumPostAndThreadName"][];
             stats: components["schemas"]["HomeStats"];
