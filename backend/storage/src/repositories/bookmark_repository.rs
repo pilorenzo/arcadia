@@ -8,18 +8,18 @@ use std::borrow::Borrow;
 impl ConnectionPool {
     pub async fn create_bookmark(
         &self,
-        bookmark: &mut UserCreatedBookmark,
+        bookmark: &UserCreatedBookmark,
         current_user_id: i32,
     ) -> Result<Bookmark> {
         let created_bookmark = sqlx::query_as!(
             Bookmark,
             r#"
-                INSERT INTO bookmarks (bookmarked_by_id, bookmarked_torrent_id, description)
+                INSERT INTO bookmarks (bookmarked_by_id, bookmarked_title_group_id, description)
                 VALUES ($1, $2, $3)
                 RETURNING *
             "#,
             current_user_id,
-            bookmark.bookmarked_torrent_id,
+            bookmark.title_group_id,
             bookmark.description,
         )
         .fetch_one(self.borrow())
@@ -34,7 +34,7 @@ impl ConnectionPool {
             Bookmark,
             r#"
             SELECT
-                id, bookmarked_by_id, bookmarked_torrent_id, description
+                id, bookmarked_by_id, bookmarked_title_group_id, description
             FROM bookmarks
             WHERE id = $1
             "#,
@@ -60,7 +60,7 @@ impl ConnectionPool {
                 description = $2
             WHERE id = $1
             RETURNING
-                id, bookmarked_by_id, bookmarked_torrent_id, description
+                id, bookmarked_by_id, bookmarked_title_group_id, description
             "#,
             bookmark_id,
             edited_bookmark.description
@@ -76,7 +76,7 @@ impl ConnectionPool {
         let _ = sqlx::query(
             r#"
                 DELETE FROM bookmarks
-                WHERE id = $1 AND current_user_id = $2;
+                WHERE id = $1 AND bookmarked_by_id = $2;
             "#,
         )
         .bind(bookmark_id)

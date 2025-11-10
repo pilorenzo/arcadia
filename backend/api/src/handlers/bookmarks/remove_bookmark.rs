@@ -4,14 +4,20 @@ use actix_web::{
     HttpResponse,
 };
 use arcadia_common::error::Result;
-use arcadia_storage::models::bookmark::RemoveBookmarkQuery;
 use arcadia_storage::redis::RedisPoolInterface;
+use serde::Deserialize;
+use utoipa::IntoParams;
+
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct RemoveBookmarkQuery {
+    pub id: i64,
+}
 
 #[utoipa::path(
     delete,
     operation_id = "Remove bookmark",
     tag = "Bookmark",
-    path = "/api/bookmark",
+    path = "/api/bookmarks",
     params (RemoveBookmarkQuery),
     security(
       ("http" = ["Bearer"])

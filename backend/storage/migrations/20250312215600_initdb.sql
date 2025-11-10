@@ -784,12 +784,11 @@ CREATE TABLE wiki_articles (
 CREATE TABLE bookmarks (
     id BIGSERIAL PRIMARY KEY,
     bookmarked_by_id INT NOT NULL,
-    bookmarked_torrent_id INT NOT NULL,
-    description VARCHAR(255),
+    bookmarked_title_group_id INT NOT NULL,
+    description TEXT,
 
     FOREIGN KEY (bookmarked_by_id) REFERENCES users(id) ON DELETE CASCADE,
-    -- should bookmarks be deleted when torrent is removed?
-    FOREIGN KEY (bookmarked_torrent_id) REFERENCES torrents(id) ON DELETE CASCADE
+    FOREIGN KEY (bookmarked_title_group_id) REFERENCES title_groups(id) ON DELETE CASCADE
 );
 CREATE TABLE conversations (
     id BIGSERIAL PRIMARY KEY,

@@ -6,6 +6,7 @@ use crate::handlers::affiliated_artists::config as AffiliatedArtistsConfig;
 // use crate::handlers::announces::config as AnnouncesConfig;
 use crate::handlers::artists::config as ArtistsConfig;
 use crate::handlers::auth::config as AuthConfig;
+use crate::handlers::bookmarks::config as BookmarksConfig;
 use crate::handlers::collages::config as CollagesConfig;
 use crate::handlers::conversations::config as ConversationsConfig;
 use crate::handlers::edition_groups::config as EditionGroupsConfig;
@@ -37,6 +38,7 @@ pub fn init<R: RedisPoolInterface + 'static>(cfg: &mut web::ServiceConfig) {
             .service(scope("/auth").configure(AuthConfig::<R>))
             .service(scope("/users").configure(UsersConfig::<R>))
             .service(scope("/user-applications").configure(UserApplicationsConfig::<R>))
+            .service(scope("/bookmarks").configure(BookmarksConfig::<R>))
             .service(scope("/title-groups").configure(TitleGroupsConfig::<R>))
             .service(scope("/edition-groups").configure(EditionGroupsConfig::<R>))
             .service(scope("/search").configure(SearchConfig::<R>))

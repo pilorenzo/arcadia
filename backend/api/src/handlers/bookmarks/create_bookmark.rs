@@ -21,11 +21,11 @@ use arcadia_storage::{
         (status = 200, description = "Successfully created the bookmark", body=Bookmark),)
 )]
 pub async fn exec<R: RedisPoolInterface + 'static>(
-    mut bookmark: Json<UserCreatedBookmark>,
+    bookmark: Json<UserCreatedBookmark>,
     arc: Data<Arcadia<R>>,
     user: Authdata,
 ) -> Result<HttpResponse> {
-    let bookmark = arc.pool.create_bookmark(&mut bookmark, user.sub).await?;
+    let bookmark = arc.pool.create_bookmark(&bookmark, user.sub).await?;
 
     Ok(HttpResponse::Created().json(bookmark))
 }
