@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use actix_multipart::form::{bytes::Bytes, text::Text, MultipartForm};
+use arcadia_shared::tracker::models::torrent::InfoHash;
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -307,6 +308,7 @@ impl FromStr for Features {
 #[derive(Debug, Serialize, FromRow, ToSchema)]
 pub struct Torrent {
     pub id: i32,
+    pub info_hash: InfoHash,
     pub upload_factor: i16,
     pub download_factor: i16,
     pub seeders: i64,

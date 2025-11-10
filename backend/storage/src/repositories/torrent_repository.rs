@@ -13,7 +13,8 @@ use arcadia_common::{
     error::{Error, Result},
     services::torrent_service::{get_announce_url, looks_like_url},
 };
-use bip_metainfo::{Info, InfoBuilder, InfoHash, Metainfo, MetainfoBuilder, PieceLength};
+use arcadia_shared::tracker::models::torrent::InfoHash;
+use bip_metainfo::{Info, InfoBuilder, Metainfo, MetainfoBuilder, PieceLength};
 use serde_json::{json, Value};
 use sqlx::PgPool;
 use std::{borrow::Borrow, str::FromStr};
@@ -72,7 +73,7 @@ impl ConnectionPool {
             .build(1, info, |_| {})
             .map_err(|_| Error::TorrentFileInvalid)?;
 
-        let info_hash = InfoHash::from_bytes(&info_normalized);
+        let info_hash = bip_metainfo::InfoHash::from_bytes(&info_normalized);
 
         // TODO: torrent metadata extraction should be done on the client side
         let parent_folder = info.directory().map(|d| d.to_str().unwrap()).unwrap_or("");
@@ -206,7 +207,7 @@ impl ConnectionPool {
             Torrent,
             r#"
             SELECT
-                id, upload_factor, download_factor, seeders, leechers,
+                id, info_hash as "info_hash: InfoHash", upload_factor, download_factor, seeders, leechers,
                 times_completed, snatched, edition_group_id, created_at, updated_at,
                 created_by_id,
                 deleted_at AS "deleted_at!: _",
@@ -270,7 +271,7 @@ impl ConnectionPool {
                 updated_at = NOW()
             WHERE id = $1 AND deleted_at IS NULL
             RETURNING
-                id, upload_factor, download_factor, seeders, leechers,
+                id, info_hash as "info_hash: InfoHash", upload_factor, download_factor, seeders, leechers,
                 times_completed, snatched, edition_group_id, created_at, updated_at,
                 created_by_id,
                 deleted_at AS "deleted_at!: _",
