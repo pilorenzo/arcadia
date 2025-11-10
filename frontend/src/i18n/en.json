@@ -112,7 +112,8 @@
     "discuss": "Discuss",
     "go_to_last_page_to_reply": "Go to last page to reply",
     "category": "Category",
-    "subcategory": "Subcategory"
+    "subcategory": "Subcategory",
+    "search": "Search forum"
   },
   "user": {
     "username": "Username",

@@ -422,6 +422,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/search/forum": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Case insensitive */
+        get: operations["Search forum"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/search/series": {
         parameters: {
             query?: never;
@@ -1348,6 +1365,13 @@ export interface components {
             /** Format: date-time */
             updated_at: string;
         };
+        ForumSearchQuery: {
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            page_size: number;
+            thread_name?: string | null;
+        };
         ForumSearchResult: {
             /** Format: int32 */
             category_id: number;
@@ -1582,6 +1606,33 @@ export interface components {
                 sticky: boolean;
                 /** Format: date-time */
                 updated_at: string;
+            }[];
+            /** Format: int64 */
+            total_items: number;
+        };
+        PaginatedResults_ForumSearchResult: {
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            page_size: number;
+            results: {
+                /** Format: int32 */
+                category_id: number;
+                category_name: string;
+                post: string;
+                /** Format: date-time */
+                post_created_at: string;
+                /** Format: int32 */
+                post_created_by_id: number;
+                post_created_by_username: string;
+                /** Format: int64 */
+                post_id: number;
+                /** Format: int32 */
+                sub_category_id: number;
+                sub_category_name: string;
+                /** Format: int64 */
+                thread_id: number;
+                thread_name: string;
             }[];
             /** Format: int64 */
             total_items: number;
@@ -3421,6 +3472,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaginatedResults_CollageSearchResult"];
+                };
+            };
+        };
+    };
+    "Search forum": {
+        parameters: {
+            query: {
+                thread_name?: string | null;
+                page: number;
+                page_size: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successfully got the series and some data about them */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedResults_ForumSearchResult"];
                 };
             };
         };

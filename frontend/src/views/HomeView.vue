@@ -2,7 +2,7 @@
   <div id="home-page">
     <div class="main">
       <LatestTorrents v-if="latestUploads" containerTitleLink="/torrents" :containerTitle="t('torrent.latest_uploads')" :titleGroups="latestUploads" />
-      <ContentContainer :container-title="t('forum.latest_forum_post', 2)" style="margin: 10px 0">
+      <ContentContainer container-title-link="/forum/search" :container-title="t('forum.latest_forum_post', 2)" style="margin: 10px 0">
         <ForumSearchResults :search-results="latestPostsInThreads" />
       </ContentContainer>
       <div class="announcements">
