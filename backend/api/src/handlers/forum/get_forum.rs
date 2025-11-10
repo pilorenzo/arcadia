@@ -2,7 +2,7 @@ use crate::Arcadia;
 use actix_web::{web::Data, HttpResponse};
 use arcadia_common::error::Result;
 use arcadia_storage::{
-    models::forum::{ForumOverview, ForumSearchForm},
+    models::forum::{ForumOverview, ForumSearchQuery},
     redis::RedisPoolInterface,
 };
 use serde_json::json;
@@ -19,7 +19,7 @@ use serde_json::json;
 pub async fn exec<R: RedisPoolInterface + 'static>(arc: Data<Arcadia<R>>) -> Result<HttpResponse> {
     //TODO: restrict access to some sub_categories based on forbidden_classes
     let forum_categories = arc.pool.find_forum_cateogries_hierarchy().await?;
-    let search_forum_threads_form = ForumSearchForm {
+    let search_forum_threads_form = ForumSearchQuery {
         thread_name: None,
         page_size: 5,
         page: 1,

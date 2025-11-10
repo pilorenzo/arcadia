@@ -187,7 +187,7 @@ pub struct ForumSearchResult {
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, IntoParams)]
-pub struct ForumSearchForm {
+pub struct ForumSearchQuery {
     pub thread_name: Option<String>,
     pub page: u32,
     pub page_size: u32,

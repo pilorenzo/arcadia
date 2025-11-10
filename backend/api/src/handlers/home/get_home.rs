@@ -3,7 +3,7 @@ use actix_web::{web::Data, HttpResponse};
 use arcadia_common::error::Result;
 use arcadia_storage::{
     models::{
-        forum::{ForumPostAndThreadName, ForumSearchForm, ForumSearchResult},
+        forum::{ForumPostAndThreadName, ForumSearchQuery, ForumSearchResult},
         home_stats::HomeStats,
         title_group::TitleGroupLite,
     },
@@ -43,7 +43,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(arc: Data<Arcadia<R>>) -> Res
         .find_title_group_info_lite(None, Some(""), &None, 5)
         .await?;
 
-    let search_forum_threads_form = ForumSearchForm {
+    let search_forum_threads_form = ForumSearchQuery {
         thread_name: None,
         page_size: 5,
         page: 1,

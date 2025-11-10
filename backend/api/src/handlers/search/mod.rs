@@ -1,5 +1,6 @@
 pub mod search_artists_lite;
 pub mod search_collages;
+pub mod search_forum;
 pub mod search_series;
 pub mod search_title_group_info_lite;
 pub mod search_torrent_requests;
@@ -20,4 +21,5 @@ pub fn config<R: RedisPoolInterface + 'static>(cfg: &mut ServiceConfig) {
     );
     cfg.service(resource("/collages").route(get().to(self::search_collages::exec::<R>)));
     cfg.service(resource("/series").route(get().to(self::search_series::exec::<R>)));
+    cfg.service(resource("/forum").route(get().to(self::search_forum::exec::<R>)));
 }

@@ -3,7 +3,7 @@ use crate::{
     models::{
         common::PaginatedResults,
         forum::{
-            ForumPost, ForumPostAndThreadName, ForumPostHierarchy, ForumSearchForm,
+            ForumPost, ForumPostAndThreadName, ForumPostHierarchy, ForumSearchQuery,
             ForumSearchResult, ForumThread, ForumThreadEnriched, GetForumThreadPostsQuery,
             UserCreatedForumPost, UserCreatedForumThread,
         },
@@ -458,7 +458,7 @@ impl ConnectionPool {
 
     pub async fn search_forum_threads(
         &self,
-        form: &ForumSearchForm,
+        form: &ForumSearchQuery,
     ) -> Result<PaginatedResults<ForumSearchResult>> {
         let limit = form.page as i64 * form.page_size as i64;
         let offset = (form.page - 1) as i64 * form.page_size as i64;
