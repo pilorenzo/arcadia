@@ -58,7 +58,8 @@
     "last": "Last",
     "prev": "Prev",
     "next": "Next",
-    "first": "First"
+    "first": "First",
+    "time": "Time"
   },
   "auth": {
     "remember_me": "Remember me"
@@ -101,14 +102,18 @@
   },
   "forum": {
     "forum": "Forum | Forums",
-    "latest_post": "Latest post",
-    "threads": "Threads",
+    "latest_post": "Latest post | Latest posts",
+    "latest_forum_post": "Latest forum post | Latest forum posts",
+    "thread": "Thread | Threads",
     "posts": "Posts",
     "new_post": "New post",
     "new_thread": "New thread",
     "thread_name": "Thread name",
     "discuss": "Discuss",
-    "go_to_last_page_to_reply": "Go to last page to reply"
+    "go_to_last_page_to_reply": "Go to last page to reply",
+    "category": "Category",
+    "subcategory": "Subcategory",
+    "search": "Search forum"
   },
   "user": {
     "username": "Username",
@@ -264,6 +269,8 @@
     "delete_torrent": "Delete torrent",
     "subtitle_language": "Subtitle language | Subtitle languages",
     "add_format": "Add format",
+    "snatched_by_user_id": "Snatched by user id",
+    "uploaded_by_user_id": "Uploaded by user id",
     "extras": {
       "extras": "Extras",
       "booklet": "Booklet",

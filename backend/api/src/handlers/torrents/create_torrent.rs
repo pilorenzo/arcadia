@@ -57,7 +57,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .header("x-api-key", arc.env.tracker.api_key.clone())
         .json(&payload)
         .send()
-        .await?;
+        .await;
 
     debug!(
         "Tried to insert new torrent into tracker's db and got: {:?}",

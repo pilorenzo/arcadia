@@ -3,7 +3,7 @@ use actix_web::{
     HttpResponse,
 };
 use arcadia_shared::tracker::models::user::{APIInsertUser, User};
-use log::info;
+use log::{debug, info};
 
 use crate::Tracker;
 
@@ -19,6 +19,8 @@ pub async fn exec(arc: Data<Tracker>, user: Json<APIInsertUser>) -> HttpResponse
     );
 
     arc.passkey2id.write().insert(user.passkey, user.id);
+
+    debug!("inserted user: {:?}", user);
 
     HttpResponse::Ok().finish()
 }

@@ -118,6 +118,11 @@ const router = createRouter({
       component: () => import('../views/forum/ForumOverviewView.vue'),
     },
     {
+      path: '/forum/search',
+      name: 'ForumSearch',
+      component: () => import('../views/forum/ForumSearch.vue'),
+    },
+    {
       path: '/forum/sub-category/:id',
       name: 'ForumSubCategory',
       meta: {

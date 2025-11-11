@@ -6,7 +6,7 @@ use arcadia_shared::tracker::models::{
     peer,
     torrent::{APIInsertTorrent, Torrent},
 };
-use log::info;
+use log::{debug, info};
 
 use crate::Tracker;
 
@@ -29,6 +29,8 @@ pub async fn exec(arc: Data<Tracker>, torrent: Json<APIInsertTorrent>) -> HttpRe
     arc.infohash2id
         .write()
         .insert(torrent.info_hash, torrent.id);
+
+    debug!("inserted torrent: {:?}", torrent);
 
     HttpResponse::Ok().finish()
 }

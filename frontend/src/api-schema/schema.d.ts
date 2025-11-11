@@ -422,6 +422,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/search/forum": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Case insensitive */
+        get: operations["Search forum"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/search/series": {
         parameters: {
             query?: never;
@@ -1163,7 +1180,7 @@ export interface components {
             /** Format: int32 */
             edition_group_id: number;
             extras: components["schemas"]["Extras"][];
-            features?: components["schemas"]["Features"][] | null;
+            features: components["schemas"]["Features"][];
             /** Format: int32 */
             id: number;
             languages: components["schemas"]["Language"][];
@@ -1304,6 +1321,7 @@ export interface components {
         };
         ForumOverview: {
             forum_categories: components["schemas"]["ForumCategoryHierarchy"][];
+            latest_posts_in_threads: components["schemas"]["ForumSearchResult"][];
         };
         ForumPost: {
             content: string;
@@ -1346,6 +1364,32 @@ export interface components {
             sticky: boolean;
             /** Format: date-time */
             updated_at: string;
+        };
+        ForumSearchQuery: {
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            page_size: number;
+            thread_name?: string | null;
+        };
+        ForumSearchResult: {
+            /** Format: int32 */
+            category_id: number;
+            category_name: string;
+            post: string;
+            /** Format: date-time */
+            post_created_at: string;
+            /** Format: int32 */
+            post_created_by_id: number;
+            post_created_by_username: string;
+            /** Format: int64 */
+            post_id: number;
+            /** Format: int32 */
+            sub_category_id: number;
+            sub_category_name: string;
+            /** Format: int64 */
+            thread_id: number;
+            thread_name: string;
         };
         ForumSubCategoryHierarchy: {
             category: components["schemas"]["ForumCategoryLite"];
@@ -1448,6 +1492,7 @@ export interface components {
             sent_at: string;
         };
         HomePage: {
+            latest_posts_in_threads: components["schemas"]["ForumSearchResult"][];
             latest_uploads: components["schemas"]["TitleGroupLite"][];
             recent_announcements: components["schemas"]["ForumPostAndThreadName"][];
             stats: components["schemas"]["HomeStats"];
@@ -1472,6 +1517,7 @@ export interface components {
             /** Format: int64 */
             users_active_today: number;
         };
+        InfoHash: number[];
         Invitation: {
             /** Format: date-time */
             created_at: string;
@@ -1560,6 +1606,108 @@ export interface components {
                 sticky: boolean;
                 /** Format: date-time */
                 updated_at: string;
+            }[];
+            /** Format: int64 */
+            total_items: number;
+        };
+        PaginatedResults_ForumSearchResult: {
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            page_size: number;
+            results: {
+                /** Format: int32 */
+                category_id: number;
+                category_name: string;
+                post: string;
+                /** Format: date-time */
+                post_created_at: string;
+                /** Format: int32 */
+                post_created_by_id: number;
+                post_created_by_username: string;
+                /** Format: int64 */
+                post_id: number;
+                /** Format: int32 */
+                sub_category_id: number;
+                sub_category_name: string;
+                /** Format: int64 */
+                thread_id: number;
+                thread_name: string;
+            }[];
+            /** Format: int64 */
+            total_items: number;
+        };
+        PaginatedResults_TitleGroupHierarchyLite: {
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            page_size: number;
+            results: {
+                affiliated_artists: components["schemas"]["AffiliatedArtistLite"][];
+                category?: null | components["schemas"]["TitleGroupCategory"];
+                content_type: components["schemas"]["ContentType"];
+                covers: string[];
+                edition_groups: components["schemas"]["EditionGroupHierarchyLite"][];
+                /** Format: int32 */
+                id: number;
+                name: string;
+                /** Format: date-time */
+                original_release_date: string;
+                platform?: null | components["schemas"]["Platform"];
+                tags: string[];
+            }[];
+            /** Format: int64 */
+            total_items: number;
+        };
+        PaginatedResults_TorrentHierarchyLite: {
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            page_size: number;
+            results: {
+                /** Format: int32 */
+                audio_bitrate?: number | null;
+                audio_bitrate_sampling?: null | components["schemas"]["AudioBitrateSampling"];
+                audio_channels?: string | null;
+                audio_codec?: null | components["schemas"]["AudioCodec"];
+                container: string;
+                /** Format: date-time */
+                created_at: string;
+                /** Format: int32 */
+                download_factor: number;
+                /** Format: int32 */
+                duration?: number | null;
+                /** Format: int32 */
+                edition_group_id: number;
+                extras: components["schemas"]["Extras"][];
+                features: components["schemas"]["Features"][];
+                /** Format: int32 */
+                id: number;
+                languages: components["schemas"]["Language"][];
+                /** Format: int64 */
+                leechers: number;
+                release_group?: string | null;
+                release_name?: string | null;
+                reports: components["schemas"]["TorrentReport"][];
+                /** Format: int64 */
+                seeders: number;
+                /** Format: int64 */
+                size: number;
+                /** Format: int64 */
+                snatched: number;
+                staff_checked: boolean;
+                subtitle_languages: components["schemas"]["Language"][];
+                /** Format: int32 */
+                times_completed: number;
+                trumpable?: string | null;
+                /** Format: int32 */
+                upload_factor: number;
+                video_codec?: null | components["schemas"]["VideoCodec"];
+                video_resolution?: null | components["schemas"]["VideoResolution"];
+                /** Format: int32 */
+                video_resolution_other_x?: number | null;
+                /** Format: int32 */
+                video_resolution_other_y?: number | null;
             }[];
             /** Format: int64 */
             total_items: number;
@@ -1895,7 +2043,7 @@ export interface components {
             name: string;
             /** Format: date-time */
             original_release_date: string;
-            platform: components["schemas"]["Platform"];
+            platform?: null | components["schemas"]["Platform"];
             tags: string[];
         };
         TitleGroupLite: {
@@ -1932,7 +2080,7 @@ export interface components {
             /** Format: int32 */
             edition_group_id: number;
             extras: components["schemas"]["Extras"][];
-            features?: components["schemas"]["Features"][] | null;
+            features: components["schemas"]["Features"][];
             file_amount_per_type: {
                 [key: string]: string;
             };
@@ -1941,6 +2089,7 @@ export interface components {
             };
             /** Format: int32 */
             id: number;
+            info_hash: components["schemas"]["InfoHash"];
             languages: components["schemas"]["Language"][];
             /** Format: int64 */
             leechers: number;
@@ -1990,7 +2139,7 @@ export interface components {
             /** Format: int32 */
             edition_group_id: number;
             extras: components["schemas"]["Extras"][];
-            features?: components["schemas"]["Features"][] | null;
+            features: components["schemas"]["Features"][];
             file_amount_per_type: {
                 [key: string]: string;
             };
@@ -2022,7 +2171,6 @@ export interface components {
             /** Format: int32 */
             upload_factor: number;
             uploaded_as_anonymous: boolean;
-            uploader: components["schemas"]["UserLite"];
             video_codec?: null | components["schemas"]["VideoCodec"];
             video_resolution?: null | components["schemas"]["VideoResolution"];
             /** Format: int32 */
@@ -2046,10 +2194,7 @@ export interface components {
             /** Format: int32 */
             edition_group_id: number;
             extras: components["schemas"]["Extras"][];
-            features?: components["schemas"]["Features"][] | null;
-            file_amount_per_type: {
-                [key: string]: string;
-            };
+            features: components["schemas"]["Features"][];
             /** Format: int32 */
             id: number;
             languages: components["schemas"]["Language"][];
@@ -2224,34 +2369,29 @@ export interface components {
             user_votes_amount: number;
         };
         TorrentSearch: {
-            order: components["schemas"]["TorrentSearchOrder"];
+            /** Format: int64 */
+            artist_id?: number | null;
+            /** Format: int32 */
+            collage_id?: number | null;
+            order_by_column: components["schemas"]["TorrentSearchOrderByColumn"];
+            order_by_direction: components["schemas"]["TorrentSearchOrderByDirection"];
             /** Format: int64 */
             page: number;
             /** Format: int64 */
             page_size: number;
-            sort_by: components["schemas"]["TorrentSearchSortField"];
-            title_group: components["schemas"]["TorrentSearchTitleGroup"];
-            torrent: components["schemas"]["TorrentSearchTorrent"];
+            title_group_include_empty_groups: boolean;
+            title_group_name?: string | null;
+            /** Format: int32 */
+            torrent_created_by_id?: number | null;
+            torrent_reported?: boolean | null;
+            /** Format: int32 */
+            torrent_snatched_by_id?: number | null;
+            torrent_staff_checked?: boolean | null;
         };
         /** @enum {string} */
-        TorrentSearchOrder: "asc" | "desc";
-        TorrentSearchResults: {
-            title_groups: components["schemas"]["TitleGroupHierarchyLite"][];
-        };
+        TorrentSearchOrderByColumn: "torrent_created_at" | "torrent_size" | "torrent_snatched_at" | "title_group_original_release_date";
         /** @enum {string} */
-        TorrentSearchSortField: "torrent_created_at" | "torrent_size" | "torrent_snatched_at" | "title_group_original_release_date";
-        TorrentSearchTitleGroup: {
-            include_empty_groups: boolean;
-            name: string;
-        };
-        TorrentSearchTorrent: {
-            /** Format: int32 */
-            created_by_id?: number | null;
-            reported?: boolean | null;
-            /** Format: int32 */
-            snatched_by_id?: number | null;
-            staff_checked?: boolean | null;
-        };
+        TorrentSearchOrderByDirection: "asc" | "desc";
         TorrentToDelete: {
             displayed_reason?: string | null;
             /** Format: int32 */
@@ -3336,6 +3476,30 @@ export interface operations {
             };
         };
     };
+    "Search forum": {
+        parameters: {
+            query: {
+                thread_name?: string | null;
+                page: number;
+                page_size: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successfully got the series and some data about them */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedResults_ForumSearchResult"];
+                };
+            };
+        };
+    };
     "Search series": {
         parameters: {
             query: {
@@ -3415,16 +3579,25 @@ export interface operations {
     };
     "Search torrents": {
         parameters: {
-            query?: never;
+            query: {
+                title_group_name?: string | null;
+                title_group_include_empty_groups: boolean;
+                torrent_reported?: boolean | null;
+                torrent_staff_checked?: boolean | null;
+                torrent_created_by_id?: number | null;
+                torrent_snatched_by_id?: number | null;
+                artist_id?: number | null;
+                collage_id?: number | null;
+                page: number;
+                page_size: number;
+                order_by_column: components["schemas"]["TorrentSearchOrderByColumn"];
+                order_by_direction: components["schemas"]["TorrentSearchOrderByDirection"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TorrentSearch"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Title groups and their torrents found */
             200: {
@@ -3432,7 +3605,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TorrentSearchResults"];
+                    "application/json": components["schemas"]["PaginatedResults_TitleGroupHierarchyLite"];
                 };
             };
         };
@@ -4023,7 +4196,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TorrentSearchResults"];
+                    "application/json": components["schemas"]["PaginatedResults_TorrentHierarchyLite"];
                 };
             };
         };
