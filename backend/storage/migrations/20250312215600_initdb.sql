@@ -6,7 +6,7 @@ CREATE TYPE user_class_enum AS ENUM (
 
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    username VARCHAR(20) UNIQUE NOT NULL,
+    username VARCHAR(15) UNIQUE NOT NULL,
     avatar TEXT,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
