@@ -25,7 +25,6 @@ use crate::handlers::{
         crate::handlers::users::warn_user::exec,
         crate::handlers::users::get_user_conversations::exec,
         crate::handlers::users::get_me::exec,
-        crate::handlers::users::get_registered_users::exec,
         crate::handlers::auth::create_user_application::exec,
         crate::handlers::user_applications::get_user_applications::exec,
         crate::handlers::user_applications::update_user_application_status::exec,
