@@ -64,7 +64,6 @@ const fetchSearchResultsFromUrl = async () => {
   searchResults.value.length = 0
   await nextTick()
   searchResults.value = response.results
-  updateUrl()
   loading.value = false
 }
 

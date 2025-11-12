@@ -1,7 +1,7 @@
 <template>
   <div class="bbcode-editor">
     <div class="boilerplate-inserters" v-if="!preview">
-      <Button size="small" @click="insertBoilerplate('[b][/b]')">
+      <Button size="small" @click="insertBoilerplate('[b]', '[/b]')">
         <template #icon>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="-1.5 0 24 24">
             <path
@@ -10,14 +10,14 @@
           </svg>
         </template>
       </Button>
-      <Button size="small" @click="insertBoilerplate('[i][/i]')">
+      <Button size="small" @click="insertBoilerplate('[i]', '[/i]')">
         <template #icon>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <path stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 3h10M4 21h10m1-18L9 21" />
           </svg>
         </template>
       </Button>
-      <Button size="small" @click="insertBoilerplate('[s][/s]')">
+      <Button size="small" @click="insertBoilerplate('[s]', '[/s]')">
         <template #icon>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <g fill="none" fill-rule="nonzero">
@@ -30,7 +30,7 @@
           </svg>
         </template>
       </Button>
-      <Button size="small" @click="insertBoilerplate('[u][/u]')">
+      <Button size="small" @click="insertBoilerplate('[u]', '[/u]')">
         <template #icon>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <path stroke="#323232" stroke-linecap="round" stroke-width="2" d="M7 4v7a5 5 0 0 0 10 0V4" />
@@ -40,7 +40,7 @@
       </Button>
     </div>
     <FloatLabel style="width: 100%" variant="in" v-if="!preview">
-      <Textarea v-model="content" rows="5" style="width: 100%" autoResize @value-change="emit('valueChange', content)" name="content" />
+      <Textarea ref="textareaRef" v-model="content" rows="5" style="width: 100%" autoResize @value-change="emit('valueChange', content)" name="content" />
       <label for="in_label">{{ label }}</label>
     </FloatLabel>
     <div class="message">
@@ -65,6 +65,7 @@ import Button from 'primevue/button'
 import { useI18n } from 'vue-i18n'
 import BBCodeRenderer from '../community/BBCodeRenderer.vue'
 import { onMounted } from 'vue'
+import { nextTick } from 'vue'
 
 const props = defineProps<{
   label: string
@@ -82,9 +83,34 @@ const { t } = useI18n()
 const content = ref('')
 const preview = ref(false)
 
-const insertBoilerplate = (boilerplate: string) => {
-  content.value = content.value + boilerplate
+const textareaRef = ref<InstanceType<typeof Textarea> | null>(null)
+const insertBoilerplate = (openTag: string, closeTag: string) => {
+  // @ts-expect-error TODO: properly type the textarea ref
+  const textareaEl = textareaRef.value?.$el as HTMLTextAreaElement
+  if (!textareaEl) return
+
+  const start = textareaEl.selectionStart
+  const end = textareaEl.selectionEnd
+  const currentVal = content.value
+  const selectedText = currentVal.substring(start, end)
+
+  const replacement = openTag + selectedText + closeTag
+
+  // Update the content
+  content.value = currentVal.substring(0, start) + replacement + currentVal.substring(end)
+
   emit('valueChange', content.value)
+
+  // nextTick ensures the DOM has updated *before* we try to set focus/selection
+  nextTick(() => {
+    // Restore focus
+    textareaEl.focus()
+
+    const newCursorPos = selectedText ? start + replacement.length : start + openTag.length
+
+    // Set the new cursor position
+    textareaEl.setSelectionRange(newCursorPos, newCursorPos)
+  })
 }
 
 onMounted(() => {
