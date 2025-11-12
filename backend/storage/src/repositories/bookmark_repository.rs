@@ -34,7 +34,7 @@ impl ConnectionPool {
             Bookmark,
             r#"
             SELECT
-                id, bookmarked_by_id, bookmarked_title_group_id, description
+                id, created_at, bookmarked_by_id, bookmarked_title_group_id, description
             FROM bookmarks
             WHERE id = $1
             "#,
@@ -60,7 +60,7 @@ impl ConnectionPool {
                 description = $2
             WHERE id = $1
             RETURNING
-                id, bookmarked_by_id, bookmarked_title_group_id, description
+                id, created_at, bookmarked_by_id, bookmarked_title_group_id, description
             "#,
             bookmark_id,
             edited_bookmark.description

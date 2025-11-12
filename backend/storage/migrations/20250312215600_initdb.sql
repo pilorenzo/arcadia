@@ -783,6 +783,7 @@ CREATE TABLE wiki_articles (
 );
 CREATE TABLE bookmarks (
     id BIGSERIAL PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     bookmarked_by_id INT NOT NULL,
     bookmarked_title_group_id INT NOT NULL,
     description TEXT,
