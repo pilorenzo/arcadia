@@ -360,6 +360,22 @@
     "add_entry_to_collage": "Add entry to collage | Add entries to collage",
     "add_collage_to_entry": "Add entry to collage | Add entry to collages"
   },
+  "bbcode": {
+    "bold": "Bold",
+    "italic": "Italic",
+    "strike": "Strike",
+    "underline": "Underline",
+    "image": "Image",
+    "link": "Link",
+    "unordered_list": "Unordered list",
+    "color": "Color",
+    "font_size": "Font size",
+    "align_left": "Align left",
+    "align_center": "Align center",
+    "align_right": "Align right",
+    "quote": "Quote",
+    "code": "Code"
+  },
   "error": {
     "write_more_than_x_chars": "Write more than {0} characters",
     "enter_at_least_x_tags": "Enter at least {0} tags",
