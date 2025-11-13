@@ -188,6 +188,7 @@ impl ConnectionPool {
             &mut tx,
             title_group_info.id,
             uploaded_torrent.id,
+            user_id,
         )
         .await;
 

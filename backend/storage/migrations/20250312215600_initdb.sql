@@ -820,7 +820,7 @@ CREATE TABLE staff_pm_messages (
 -- notifies of new posts within a thread
 CREATE TABLE subscriptions_forum_thread_posts (
     id BIGSERIAL PRIMARY KEY,
-    forum_thread_id BIGINT,
+    forum_thread_id BIGINT NOT NULL,
     user_id INT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     FOREIGN KEY (forum_thread_id) REFERENCES forum_threads(id) ON DELETE CASCADE,
@@ -829,7 +829,8 @@ CREATE TABLE subscriptions_forum_thread_posts (
 );
 CREATE TABLE notifications_forum_thread_posts (
     id BIGSERIAL PRIMARY KEY,
-    forum_post_id BIGINT,
+    forum_thread_id BIGINT NOT NULL,
+    forum_post_id BIGINT NOT NULL,
     user_id INT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     read_status BOOLEAN NOT NULL DEFAULT FALSE,
@@ -839,7 +840,7 @@ CREATE TABLE notifications_forum_thread_posts (
 -- notifies of new torrents within a title group
 CREATE TABLE subscriptions_title_group_torrents (
     id BIGSERIAL PRIMARY KEY,
-    title_group_id INT,
+    title_group_id INT NOT NULL,
     user_id INT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     FOREIGN KEY (title_group_id) REFERENCES title_groups(id) ON DELETE CASCADE,
@@ -848,7 +849,7 @@ CREATE TABLE subscriptions_title_group_torrents (
 );
 CREATE TABLE notifications_title_group_torrents  (
     id BIGSERIAL PRIMARY KEY,
-    torrent_id INT,
+    torrent_id INT NOT NULL,
     user_id INT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     read_status BOOLEAN NOT NULL DEFAULT FALSE,

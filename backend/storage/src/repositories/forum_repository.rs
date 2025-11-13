@@ -26,7 +26,7 @@ impl ConnectionPool {
             .begin()
             .await?;
 
-        let forum_post = sqlx::query_as!(
+        let created_forum_post = sqlx::query_as!(
             ForumPost,
             r#"
                 INSERT INTO forum_posts (content, created_by_id, forum_thread_id)
@@ -65,9 +65,17 @@ impl ConnectionPool {
         .await
         .map_err(Error::CouldNotCreateForumPost)?;
 
+        Self::notify_users_forum_thread_posts(
+            &mut tx,
+            forum_post.forum_thread_id,
+            created_forum_post.id,
+            current_user_id,
+        )
+        .await?;
+
         tx.commit().await?;
 
-        Ok(forum_post)
+        Ok(created_forum_post)
     }
 
     pub async fn create_forum_thread(
@@ -316,6 +324,11 @@ impl ConnectionPool {
         .fetch_one(self.borrow())
         .await
         .map_err(Error::CouldNotFindForumThread)?;
+
+        if forum_thread.is_subscribed {
+            Self::mark_notification_forum_thread_post_as_read(self, forum_thread_id, user_id)
+                .await?;
+        }
 
         Ok(forum_thread)
     }

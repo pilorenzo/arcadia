@@ -388,6 +388,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/notifications/forum-thread-posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["Get notifications for forum thread posts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/search/artists/lite": {
         parameters: {
             query?: never;
@@ -1563,6 +1579,18 @@ export interface components {
             id: number;
             name?: string | null;
         };
+        NotificationForumThreadPost: {
+            /** Format: date-time */
+            created_at: string;
+            /** Format: int64 */
+            forum_post_id: number;
+            /** Format: int64 */
+            forum_thread_id: number;
+            forum_thread_name: string;
+            /** Format: int64 */
+            id: number;
+            read_status: boolean;
+        };
         PaginatedResults_CollageSearchResult: {
             /** Format: int32 */
             page: number;
@@ -1739,6 +1767,8 @@ export interface components {
             peers: components["schemas"]["Peer"][];
             /** Format: int32 */
             unread_conversations_amount: number;
+            /** Format: int32 */
+            unread_notifications_amount_forum_thread_posts: number;
             user: components["schemas"]["User"];
             user_warnings: components["schemas"]["UserWarning"][];
         };
@@ -3421,6 +3451,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MasterGroup"];
+                };
+            };
+        };
+    };
+    "Get notifications for forum thread posts": {
+        parameters: {
+            query: {
+                include_read: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successfully got the notifications */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationForumThreadPost"][];
                 };
             };
         };
