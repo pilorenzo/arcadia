@@ -18,7 +18,7 @@ use arcadia_storage::{
       ("http" = ["Bearer"])
     ),
     responses(
-        (status = 200, description = "Successfully created the bookmark", body=Bookmark),)
+        (status = 201, description = "Successfully created the bookmark", body=Bookmark),)
 )]
 pub async fn exec<R: RedisPoolInterface + 'static>(
     bookmark: Json<UserCreatedBookmark>,
