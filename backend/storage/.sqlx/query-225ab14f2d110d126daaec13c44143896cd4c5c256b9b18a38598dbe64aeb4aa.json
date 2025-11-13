@@ -1,0 +1,48 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE bookmarks\n            SET\n                description = $3\n            WHERE id = $1 AND bookmarked_by_id = $2\n            RETURNING\n                id, created_at, bookmarked_by_id, bookmarked_title_group_id, description\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 2,
+        "name": "bookmarked_by_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "bookmarked_title_group_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "description",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int4",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "225ab14f2d110d126daaec13c44143896cd4c5c256b9b18a38598dbe64aeb4aa"
+}
