@@ -52,18 +52,20 @@ impl ConnectionPool {
         &self,
         edited_bookmark: &EditedBookmark,
         bookmark_id: i64,
+        current_user_id: i32,
     ) -> Result<Bookmark> {
         let updated_bookmark = sqlx::query_as!(
             Bookmark,
             r#"
             UPDATE bookmarks
             SET
-                description = $2
-            WHERE id = $1
+                description = $3
+            WHERE id = $1 AND bookmarked_by_id = $2
             RETURNING
                 id, created_at, bookmarked_by_id, bookmarked_title_group_id, description
             "#,
             bookmark_id,
+            current_user_id,
             edited_bookmark.description
         )
         .fetch_one(self.borrow())
@@ -74,7 +76,7 @@ impl ConnectionPool {
     }
 
     pub async fn delete_bookmark(&self, bookmark_id: i64, current_user_id: i32) -> Result<()> {
-        let _ = sqlx::query(
+        let result = sqlx::query(
             r#"
                 DELETE FROM bookmarks
                 WHERE id = $1 AND bookmarked_by_id = $2;
@@ -84,6 +86,10 @@ impl ConnectionPool {
         .bind(current_user_id)
         .execute(self.borrow())
         .await?;
+
+        if result.rows_affected() == 0 {
+            return Err(Error::CouldNotFindBookmark(sqlx::Error::RowNotFound));
+        }
 
         Ok(())
     }

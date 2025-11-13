@@ -30,7 +30,10 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
 ) -> Result<HttpResponse> {
     let bookmark = arc.pool.find_bookmark(form.id, user.sub).await?;
 
-    let updated_bookmark = arc.pool.update_bookmark(&form, bookmark.id).await?;
+    let updated_bookmark = arc
+        .pool
+        .update_bookmark(&form, bookmark.id, user.sub)
+        .await?;
 
     Ok(HttpResponse::Ok().json(updated_bookmark))
 }
