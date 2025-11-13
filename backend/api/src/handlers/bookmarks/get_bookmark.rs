@@ -1,4 +1,4 @@
-use crate::Arcadia;
+use crate::{middlewares::auth_middleware::Authdata, Arcadia};
 use actix_web::{
     web::{Data, Query},
     HttpResponse,
@@ -29,8 +29,9 @@ pub struct GetBookmarkQuery {
 pub async fn exec<R: RedisPoolInterface + 'static>(
     query: Query<GetBookmarkQuery>,
     arc: Data<Arcadia<R>>,
+    user: Authdata,
 ) -> Result<HttpResponse> {
-    let bookmark = arc.pool.find_bookmark(query.id).await?;
+    let bookmark = arc.pool.find_bookmark(query.id, user.sub).await?;
 
     Ok(HttpResponse::Ok().json(bookmark))
 }

@@ -29,16 +29,17 @@ impl ConnectionPool {
         Ok(created_bookmark)
     }
 
-    pub async fn find_bookmark(&self, bookmark_id: i64) -> Result<Bookmark> {
+    pub async fn find_bookmark(&self, bookmark_id: i64, current_user_id: i32) -> Result<Bookmark> {
         let bookmark = sqlx::query_as!(
             Bookmark,
             r#"
             SELECT
                 id, created_at, bookmarked_by_id, bookmarked_title_group_id, description
             FROM bookmarks
-            WHERE id = $1
+            WHERE id = $1 AND bookmarked_by_id = $2
             "#,
             bookmark_id,
+            current_user_id
         )
         .fetch_one(self.borrow())
         .await

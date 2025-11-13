@@ -7,7 +7,7 @@ use arcadia_storage::{
     redis::RedisPoolInterface,
 };
 
-use crate::Arcadia;
+use crate::{middlewares::auth_middleware::Authdata, Arcadia};
 use arcadia_common::error::Result;
 
 #[utoipa::path(
@@ -26,8 +26,9 @@ use arcadia_common::error::Result;
 pub async fn exec<R: RedisPoolInterface + 'static>(
     form: Json<EditedBookmark>,
     arc: Data<Arcadia<R>>,
+    user: Authdata,
 ) -> Result<HttpResponse> {
-    let bookmark = arc.pool.find_bookmark(form.id).await?;
+    let bookmark = arc.pool.find_bookmark(form.id, user.sub).await?;
 
     let updated_bookmark = arc.pool.update_bookmark(&form, bookmark.id).await?;
 
