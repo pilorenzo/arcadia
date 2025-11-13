@@ -23,7 +23,7 @@ pub struct GetBookmarkQuery {
       ("http" = ["Bearer"])
     ),
     responses(
-        (status = 200, description = "Found bookmark", body=Bookmark),
+        (status = 200, description = "Found the bookmark", body=Bookmark),
     )
 )]
 pub async fn exec<R: RedisPoolInterface + 'static>(

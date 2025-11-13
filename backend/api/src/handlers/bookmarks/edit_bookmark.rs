@@ -19,7 +19,7 @@ use arcadia_common::error::Result;
         ("http" = ["Bearer"])
     ),
     responses(
-        (status = 200, description = "Successfully edited bookmark", body=Bookmark),
+        (status = 200, description = "Successfully edited the bookmark", body=Bookmark),
     )
 )]
 

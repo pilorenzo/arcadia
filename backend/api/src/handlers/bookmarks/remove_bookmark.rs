@@ -23,7 +23,7 @@ pub struct RemoveBookmarkQuery {
       ("http" = ["Bearer"])
     ),
     responses(
-        (status = 200, description = "Successfully removed bookmark"),
+        (status = 200, description = "Successfully removed the bookmark"),
     )
 )]
 pub async fn exec<R: RedisPoolInterface + 'static>(
