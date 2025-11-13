@@ -277,7 +277,11 @@ impl ConnectionPool {
         Ok(forum_sub_category.result_json.unwrap())
     }
 
-    pub async fn find_forum_thread(&self, forum_thread_id: i64) -> Result<ForumThreadEnriched> {
+    pub async fn find_forum_thread(
+        &self,
+        forum_thread_id: i64,
+        user_id: i32,
+    ) -> Result<ForumThreadEnriched> {
         let forum_thread = sqlx::query_as!(
             ForumThreadEnriched,
             r#"
@@ -292,17 +296,22 @@ impl ConnectionPool {
                 ft.locked,
                 fsc.name AS forum_sub_category_name,
                 fc.name AS forum_category_name,
-                fc.id AS forum_category_id
+                fc.id AS forum_category_id,
+                (sft.id IS NOT NULL) AS "is_subscribed!"
             FROM
                 forum_threads AS ft
             JOIN
                 forum_sub_categories AS fsc ON ft.forum_sub_category_id = fsc.id
             JOIN
                 forum_categories AS fc ON fsc.forum_category_id = fc.id
+            LEFT JOIN
+                subscriptions_forum_thread_posts AS sft
+                ON sft.forum_thread_id = ft.id AND sft.user_id = $2
             WHERE
-                ft.id = $1
+                ft.id = $1;
             "#,
-            forum_thread_id
+            forum_thread_id,
+            user_id
         )
         .fetch_one(self.borrow())
         .await

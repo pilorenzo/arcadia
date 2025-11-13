@@ -817,46 +817,43 @@ CREATE TABLE staff_pm_messages (
 	created_by_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 	content TEXT NOT NULL
 );
-CREATE TYPE notification_reason_enum AS ENUM (
-    'TorrentUploadedInSubscribedTitleGroup',
-    'SeedingTorrentDeleted',
-    'TitleGroupAddedForSubscribedArtist',
-    'ThreadAddedInSubscribedForumSubCategory',
-    'TitleGroupAddedInSubscribedCollage'
-);
-CREATE TABLE subscriptions (
+-- notifies of new posts within a thread
+CREATE TABLE subscriptions_forum_thread_posts (
     id BIGSERIAL PRIMARY KEY,
-    title_group_id INT,
-    artist_id BIGINT,
     forum_thread_id BIGINT,
-    forum_sub_category_id BIGINT,
-    subscribed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    subscriber_id BIGINT NOT NULL,
-    FOREIGN KEY (title_group_id) REFERENCES title_groups(id) ON DELETE CASCADE,
-    FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE,
-    FOREIGN KEY (forum_thread_id) REFERENCES forum_threads(id) ON DELETE CASCADE,
-    FOREIGN KEY (forum_sub_category_id) REFERENCES forum_sub_categories(id) ON DELETE CASCADE,
-    FOREIGN KEY (subscriber_id) REFERENCES users(id) ON DELETE SET NULL,
-    UNIQUE (title_group_id, subscriber_id)
-);
-CREATE TABLE notifications (
-    id BIGSERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    receiver_id INT NOT NULL,
-    reason notification_reason_enum NOT NULL,
-    message TEXT,
+    FOREIGN KEY (forum_thread_id) REFERENCES forum_threads(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE (forum_thread_id, user_id)
+);
+CREATE TABLE notifications_forum_thread_posts (
+    id BIGSERIAL PRIMARY KEY,
+    forum_post_id BIGINT,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     read_status BOOLEAN NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (forum_post_id) REFERENCES forum_posts(id) ON DELETE CASCADE
+);
+-- notifies of new torrents within a title group
+CREATE TABLE subscriptions_title_group_torrents (
+    id BIGSERIAL PRIMARY KEY,
     title_group_id INT,
-    torrent_id INT,
-    artist_id BIGINT,
-    -- collage_id BIGINT,
-    forum_thread_id BIGINT,
-    FOREIGN KEY (receiver_id) REFERENCES users(id),
+    user_id INT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     FOREIGN KEY (title_group_id) REFERENCES title_groups(id) ON DELETE CASCADE,
-    FOREIGN KEY (torrent_id) REFERENCES torrents(id) ON DELETE CASCADE,
-    FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE,
-    -- FOREIGN KEY (collage_id) REFERENCES collages(id) ON DELETE CASCADE,
-    FOREIGN KEY (forum_thread_id) REFERENCES forum_threads(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE (title_group_id, user_id)
+);
+CREATE TABLE notifications_title_group_torrents  (
+    id BIGSERIAL PRIMARY KEY,
+    torrent_id INT,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    read_status BOOLEAN NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (torrent_id) REFERENCES torrents(id) ON DELETE CASCADE
 );
 
 -- Views

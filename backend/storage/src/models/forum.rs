@@ -123,6 +123,7 @@ pub struct ForumThreadPostLite {
 pub struct ForumThreadEnriched {
     pub id: i64,
     pub name: String,
+    pub is_subscribed: bool,
     #[schema(value_type = String, format = DateTime)]
     pub created_at: DateTime<Local>,
     pub created_by_id: i32,
