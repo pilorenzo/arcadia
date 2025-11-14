@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                INSERT INTO bookmarks (bookmarked_by_id, bookmarked_title_group_id, description)\n                VALUES ($1, $2, $3)\n                RETURNING *\n            ",
+  "query": "\n            SELECT\n                id, created_at, user_id, title_group_id, description\n            FROM title_group_bookmarks\n            WHERE id = $1 AND user_id = $2\n            ",
   "describe": {
     "columns": [
       {
@@ -15,12 +15,12 @@
       },
       {
         "ordinal": 2,
-        "name": "bookmarked_by_id",
+        "name": "user_id",
         "type_info": "Int4"
       },
       {
         "ordinal": 3,
-        "name": "bookmarked_title_group_id",
+        "name": "title_group_id",
         "type_info": "Int4"
       },
       {
@@ -31,9 +31,8 @@
     ],
     "parameters": {
       "Left": [
-        "Int4",
-        "Int4",
-        "Text"
+        "Int8",
+        "Int4"
       ]
     },
     "nullable": [
@@ -44,5 +43,5 @@
       true
     ]
   },
-  "hash": "b88d047f1f0769fc5c9ce0b670c833171e0db60bffc3d7346db71449a5122f43"
+  "hash": "c84c4a88e51a7a4adbc2ed3f14712eec3e3920064bb37d3ef3b24d5aad179840"
 }
