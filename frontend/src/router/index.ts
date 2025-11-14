@@ -205,6 +205,14 @@ const router = createRouter({
       component: () => import('../views/collage/NewCollageView.vue'),
     },
     {
+      path: '/notifications',
+      name: 'Notifications',
+      meta: {
+        documentTitle: 'Notifications',
+      },
+      component: () => import('../views/NotificationsView.vue'),
+    },
+    {
       path: '/staff-dashboard',
       name: 'StaffDashboard',
       component: () => import('../views/StaffDashboard.vue'),

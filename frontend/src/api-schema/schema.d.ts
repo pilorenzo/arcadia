@@ -388,6 +388,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/notifications/forum-thread-posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["Get notifications for forum thread posts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/search/artists/lite": {
         parameters: {
             query?: never;
@@ -593,8 +609,24 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["Create subscription"];
-        delete: operations["Remove subscription"];
+        post?: never;
+        delete: operations["Remove forum thread posts subscription"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/subscriptions/forum-thread-posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["Create forum thread posts subscription"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -848,22 +880,6 @@ export interface paths {
             cookie?: never;
         };
         get: operations["Get me"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/users/registered": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["Get registered users"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1432,6 +1448,7 @@ export interface components {
             forum_sub_category_name: string;
             /** Format: int64 */
             id: number;
+            is_subscribed: boolean;
             locked: boolean;
             name: string;
             /** Format: int64 */
@@ -1561,6 +1578,18 @@ export interface components {
             /** Format: int32 */
             id: number;
             name?: string | null;
+        };
+        NotificationForumThreadPost: {
+            /** Format: date-time */
+            created_at: string;
+            /** Format: int64 */
+            forum_post_id: number;
+            /** Format: int64 */
+            forum_thread_id: number;
+            forum_thread_name: string;
+            /** Format: int64 */
+            id: number;
+            read_status: boolean;
         };
         PaginatedResults_CollageSearchResult: {
             /** Format: int32 */
@@ -1738,6 +1767,8 @@ export interface components {
             peers: components["schemas"]["Peer"][];
             /** Format: int32 */
             unread_conversations_amount: number;
+            /** Format: int32 */
+            unread_notifications_amount_forum_thread_posts: number;
             user: components["schemas"]["User"];
             user_warnings: components["schemas"]["UserWarning"][];
         };
@@ -2724,11 +2755,6 @@ export interface components {
             username: string;
             warned: boolean;
         };
-        UserMinimal: {
-            /** Format: int32 */
-            id: number;
-            passkey: string;
-        };
         UserWarning: {
             ban: boolean;
             /** Format: date-time */
@@ -3429,6 +3455,28 @@ export interface operations {
             };
         };
     };
+    "Get notifications for forum thread posts": {
+        parameters: {
+            query: {
+                include_read: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successfully got the notifications */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationForumThreadPost"][];
+                };
+            };
+        };
+    };
     "Search artists": {
         parameters: {
             query: {
@@ -3770,32 +3818,10 @@ export interface operations {
             };
         };
     };
-    "Create subscription": {
+    "Remove forum thread posts subscription": {
         parameters: {
             query: {
-                item_id: number;
-                item: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successfully subscribed to the item */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    "Remove subscription": {
-        parameters: {
-            query: {
-                item_id: number;
-                item: string;
+                thread_id: number;
             };
             header?: never;
             path?: never;
@@ -3804,6 +3830,26 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Successfully unsubscribed to the item */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Create forum thread posts subscription": {
+        parameters: {
+            query: {
+                thread_id: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successfully subscribed to the item */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -4382,26 +4428,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Profile"];
-                };
-            };
-        };
-    };
-    "Get registered users": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description All registered users */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserMinimal"][];
                 };
             };
         };

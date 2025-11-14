@@ -3,14 +3,12 @@ use crate::{
     models::{
         common::PaginatedResults,
         edition_group::EditionGroupHierarchyLite,
-        notification::NotificationReason,
         title_group::TitleGroupHierarchyLite,
         torrent::{
             EditedTorrent, Features, Torrent, TorrentHierarchyLite, TorrentMinimal, TorrentSearch,
             TorrentToDelete, UploadedTorrent,
         },
     },
-    repositories::notification_repository::NotificationItemsIds,
 };
 use arcadia_common::{
     error::{Error, Result},
@@ -186,17 +184,11 @@ impl ConnectionPool {
         .fetch_one(&mut *tx)
         .await?;
 
-        let _ = Self::notify_users(
+        let _ = Self::notify_users_title_group_torrents(
             &mut tx,
-            &NotificationReason::TorrentUploadedInSubscribedTitleGroup,
-            None,
-            NotificationItemsIds {
-                title_group_id: Some(title_group_info.id),
-                torrent_id: Some(uploaded_torrent.id),
-                artist_id: None,
-                collage_id: None,
-                forum_thread_id: None,
-            },
+            title_group_info.id,
+            uploaded_torrent.id,
+            user_id,
         )
         .await;
 
@@ -699,19 +691,7 @@ impl ConnectionPool {
             .begin()
             .await?;
 
-        Self::notify_users(
-            &mut tx,
-            &NotificationReason::SeedingTorrentDeleted,
-            Some(torrent_to_delete.displayed_reason.as_ref().unwrap()),
-            NotificationItemsIds {
-                title_group_id: None,
-                torrent_id: Some(torrent_to_delete.id),
-                artist_id: None,
-                collage_id: None,
-                forum_thread_id: None,
-            },
-        )
-        .await?;
+        // TODO: Notify users about the deletion of the torrent
 
         sqlx::query!(
             r#"

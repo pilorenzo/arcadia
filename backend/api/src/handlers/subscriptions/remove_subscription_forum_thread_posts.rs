@@ -1,5 +1,5 @@
 use crate::{
-    handlers::subscriptions::create_subscription::AddSubscriptionQuery,
+    handlers::subscriptions::create_subscription_forum_thread_posts::AddSubscriptionForumThreadPostsQuery,
     middlewares::auth_middleware::Authdata, Arcadia,
 };
 use actix_web::{
@@ -9,14 +9,14 @@ use actix_web::{
 use arcadia_common::error::Result;
 use arcadia_storage::redis::RedisPoolInterface;
 
-pub type RemoveSubscriptionQuery = AddSubscriptionQuery;
+pub type RemoveSubscriptionForumThreadPostsQuery = AddSubscriptionForumThreadPostsQuery;
 
 #[utoipa::path(
     delete,
-    operation_id = "Remove subscription",
+    operation_id = "Remove forum thread posts subscription",
     tag = "Subscription",
     path = "/api/subscriptions",
-    params (RemoveSubscriptionQuery),
+    params (RemoveSubscriptionForumThreadPostsQuery),
     security(
       ("http" = ["Bearer"])
     ),
@@ -25,12 +25,12 @@ pub type RemoveSubscriptionQuery = AddSubscriptionQuery;
     )
 )]
 pub async fn exec<R: RedisPoolInterface + 'static>(
-    query: Query<RemoveSubscriptionQuery>,
+    query: Query<RemoveSubscriptionForumThreadPostsQuery>,
     arc: Data<Arcadia<R>>,
     user: Authdata,
 ) -> Result<HttpResponse> {
     arc.pool
-        .delete_subscription(query.item_id, &query.item, user.sub)
+        .delete_subscription_forum_thread_posts(query.thread_id, user.sub)
         .await?;
 
     Ok(HttpResponse::Ok().json(serde_json::json!({"result": "success"})))

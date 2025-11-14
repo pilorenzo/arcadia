@@ -16,9 +16,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center">
           <div class="left">
             <div class="top">
-              <RouterLink :to="`/forum/thread/${slotProps.data.thread_id}?post_id=${slotProps.data.post_id}#post-${slotProps.data.post_id}`">
-                {{ slotProps.data.thread_name }}
-              </RouterLink>
+              <ForumThreadName :threadId="slotProps.data.thread_id" :threadName="slotProps.data.thread_name" :postId="slotProps.data.post_id" />
             </div>
             <div class="bottom" style="font-size: 0.8em; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; width: 40vw">
               {{ slotProps.data.post }}
@@ -46,6 +44,7 @@ import type { ForumSearchResult } from '@/services/api/forumService'
 import { timeAgo } from '@/services/helpers'
 import { Column, DataTable } from 'primevue'
 import { useI18n } from 'vue-i18n'
+import ForumThreadName from './ForumThreadName.vue'
 
 const { t } = useI18n()
 

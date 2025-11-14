@@ -60,9 +60,9 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         .pool
         .find_unread_conversations_amount(current_user.id)
         .await?;
-    let unread_notifications_amount = arc
+    let unread_notifications_amount_forum_thread_posts = arc
         .pool
-        .find_unread_notifications_amount(current_user.id)
+        .find_unread_notifications_amount_forum_thread_posts(current_user.id)
         .await?;
 
     Ok(HttpResponse::Ok().json(json!({
@@ -70,7 +70,7 @@ pub async fn exec<R: RedisPoolInterface + 'static>(
         "peers": [] ,
         "user_warnings": user_warnings,
         "unread_conversations_amount": unread_conversations_amount,
-        "unread_notifications_amount":unread_notifications_amount,
+        "unread_notifications_amount_forum_thread_posts":unread_notifications_amount_forum_thread_posts,
         "last_five_uploaded_torrents": uploaded_torrents.results,
         "last_five_snatched_torrents": snatched_torrents.results
     })))

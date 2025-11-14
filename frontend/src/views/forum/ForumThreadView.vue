@@ -1,9 +1,20 @@
 <template>
   <div v-if="forumThread">
-    <div class="title">
-      <RouterLink to="/forum">{{ forumThread.forum_category_name }}</RouterLink> >
-      <RouterLink :to="`/forum/sub-category/${forumThread.forum_sub_category_id}`">{{ forumThread.forum_sub_category_name }}</RouterLink> >
-      {{ forumThread.name }}
+    <div class="top-bar">
+      <div class="title">
+        <RouterLink to="/forum">{{ forumThread.forum_category_name }}</RouterLink> >
+        <RouterLink :to="`/forum/sub-category/${forumThread.forum_sub_category_id}`">{{ forumThread.forum_sub_category_name }}</RouterLink> >
+        {{ forumThread.name }}
+      </div>
+      <div class="actions">
+        <i v-if="togglingSubscription" class="pi pi-hourglass" />
+        <i
+          v-else
+          v-tooltip.top="t(`general.${forumThread.is_subscribed ? 'un' : ''}subscribe`)"
+          @click="toggleSubscribtion"
+          :class="`pi pi-bell${forumThread.is_subscribed ? '-slash' : ''}`"
+        />
+      </div>
     </div>
     <PaginatedResults
       v-if="forumThreadPosts.length > 0"
@@ -68,11 +79,14 @@ import { scrollToHash } from '@/services/helpers'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { watch } from 'vue'
+import { subscribeToForumThreadPosts, unsubscribeToForumThreadPosts } from '@/services/api/subscriptionService'
+import { showToast } from '@/main'
 
 const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
 
+const togglingSubscription = ref(false)
 const forumThread = ref<null | ForumThreadEnriched>(null)
 const forumThreadPosts = ref<ForumPostHierarchy[]>([])
 const totalPosts = ref(0)
@@ -160,6 +174,20 @@ const sendPost = async () => {
   sendingPost.value = false
 }
 
+const toggleSubscribtion = async () => {
+  if (forumThread.value) {
+    togglingSubscription.value = true
+    if (forumThread.value.is_subscribed) {
+      await unsubscribeToForumThreadPosts(parseInt(route.params.id.toString()))
+    } else {
+      await subscribeToForumThreadPosts(parseInt(route.params.id.toString()))
+    }
+    forumThread.value.is_subscribed = !forumThread.value.is_subscribed
+    showToast('Success', t(`title_group.${forumThread.value.is_subscribed ? 'subscription_successful' : 'unsubscription_successful'}`), 'success', 3000)
+    togglingSubscription.value = false
+  }
+}
+
 const changePage = (page: number) => {
   currentPage.value = page
   router.push({ query: { page } })
@@ -175,6 +203,14 @@ watch(
 </script>
 
 <style scoped>
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  .actions {
+    cursor: pointer;
+  }
+}
 .new-post {
   display: flex;
   flex-direction: column;
