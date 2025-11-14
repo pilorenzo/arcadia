@@ -4,23 +4,23 @@ use sqlx::prelude::FromRow;
 use utoipa::ToSchema;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
-pub struct Bookmark {
+pub struct TitleGroupBookmark {
     pub id: i64,
     #[schema(value_type = String, format = DateTime)]
     pub created_at: DateTime<Utc>,
-    pub bookmarked_by_id: i32,
-    pub bookmarked_title_group_id: i32,
-    pub description: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct UserCreatedBookmark {
+    pub user_id: i32,
     pub title_group_id: i32,
     pub description: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct EditedBookmark {
+pub struct UserCreatedTitleGroupBookmark {
+    pub title_group_id: i32,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct EditedTitleGroupBookmark {
     pub id: i64,
     pub description: Option<String>,
 }

@@ -781,15 +781,15 @@ CREATE TABLE wiki_articles (
 
     FOREIGN KEY (created_by_id) REFERENCES users(id)
 );
-CREATE TABLE bookmarks (
+CREATE TABLE title_group_bookmarks (
     id BIGSERIAL PRIMARY KEY,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    bookmarked_by_id INT NOT NULL,
-    bookmarked_title_group_id INT NOT NULL,
+    user_id INT NOT NULL,
+    title_group_id INT NOT NULL,
     description TEXT,
 
-    FOREIGN KEY (bookmarked_by_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (bookmarked_title_group_id) REFERENCES title_groups(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (title_group_id) REFERENCES title_groups(id) ON DELETE CASCADE
 );
 CREATE TABLE conversations (
     id BIGSERIAL PRIMARY KEY,
